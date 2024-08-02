@@ -7,6 +7,9 @@ import { useRouter } from 'next/navigation';
 
 import KeycapActions from '../components/KeycapActions';
 import ReportsModal from '../components/ReportsModal';
+import TransactionsModal from '../components/TransactionsModal';
+import VoidModal from '../components/VoidModal';
+
 
 const Dashboard = ({ isVisible, onClose }) => {
     const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -29,6 +32,8 @@ const Dashboard = ({ isVisible, onClose }) => {
     const [showVoidModal, setShowVoidModal] = useState(false);
     const [itemToVoid, setItemToVoid] = useState(null);
     const [adminPassword, setAdminPassword] = useState('');
+
+    const [isVoidModalVisible, setIsVoidModalVisible] = useState(false);
 
     const [scanning, setScanning] = useState(false);
     const [scannedBarcode, setScannedBarcode] = useState('');
@@ -85,20 +90,21 @@ const Dashboard = ({ isVisible, onClose }) => {
             .catch(error => console.error('Error fetching users:', error));
     };
 
-    const handleLogin = (e) => {
-        e.preventDefault();
-        const user = users.find(u => u.username === username && u.password === password);
+    const handleLogin = (username, password) => {
+        if (username && password) {
+            const user = users.find(u => u.username === username && u.password === password);
 
-        if (user) {
-            setIsLoggedIn(true);
-            localStorage.setItem('name', user.fullname);
-            localStorage.setItem('role', user.role);
-            localStorage.setItem('currentUsername', username);
-            setFullname(user.fullname);
-            setRole(user.role);
-            setIsAdmin(user.role === 'admin');
-        } else {
-            alert('Invalid username or password');
+            if (user) {
+                setIsLoggedIn(true);
+                localStorage.setItem('name', user.fullname);
+                localStorage.setItem('role', user.role);
+                localStorage.setItem('currentUsername', username);
+                setFullname(user.fullname);
+                setRole(user.role);
+                setIsAdmin(user.role === 'admin');
+            } else {
+                // alert('Invalid username or password');
+            }
         }
     };
 
@@ -108,7 +114,7 @@ const Dashboard = ({ isVisible, onClose }) => {
         setPassword('');
         setFullname('');
         setRole('');
-        setIsAdmin(false); // Reset isAdmin
+        setIsAdmin(false);
 
         localStorage.removeItem('name');
         localStorage.removeItem('role');
@@ -156,13 +162,13 @@ const Dashboard = ({ isVisible, onClose }) => {
                             : item
                     );
 
-                    // Calculate the new total
                     const newTotal = updatedItems.reduce((acc, item) => acc + item.amount, 0);
                     setTotal(newTotal);
 
                     return updatedItems;
                 } else {
                     const newItem = {
+                        id: prevItems.length + 1, // Incremental ID
                         quantity: parsedQuantity,
                         product: productName,
                         price: parsedPrice,
@@ -170,14 +176,12 @@ const Dashboard = ({ isVisible, onClose }) => {
                     };
                     const newItems = [...prevItems, newItem];
 
-
                     const newTotal = newItems.reduce((acc, item) => acc + item.amount, 0);
                     setTotal(newTotal);
 
                     return newItems;
                 }
             });
-
 
             setQuantity('1');
             setBarcode('');
@@ -187,6 +191,7 @@ const Dashboard = ({ isVisible, onClose }) => {
             alert('Quantity must be greater than 0');
         }
     };
+
 
 
 
@@ -234,36 +239,75 @@ const Dashboard = ({ isVisible, onClose }) => {
     };
 
 
-    const handleVoidSubmit = async (e) => {
-        e.preventDefault();
+    // const handleVoidSubmit = async (e) => {
+    //     e.preventDefault();
 
-        try {
-            const usersResponse = await axios.get('http://localhost/listing/sampleData.php?type=users');
-            const users = usersResponse.data;
+    //     try {
+    //         const usersResponse = await axios.get('http://localhost/listing/sampleData.php?type=users');
+    //         const users = usersResponse.data;
 
-            const isValid = users.some(user => user.role === 'admin' && user.password === adminPassword);
+    //         const isValid = users.some(user => user.role === 'admin' && user.password === adminPassword);
 
-            if (isValid) {
-                if (Array.isArray(itemToVoid)) {
+    //         if (isValid) {
+    //             if (Array.isArray(itemToVoid)) {
 
-                    setItems(prevItems => prevItems.filter(item => !itemToVoid.includes(item)));
-                    const totalToSubtract = itemToVoid.reduce((sum, item) => sum + item.amount, 0);
-                    setTotal(prevTotal => prevTotal - totalToSubtract);
-                } else if (itemToVoid) {
+    //                 setItems(prevItems => prevItems.filter(item => !itemToVoid.includes(item)));
+    //                 const totalToSubtract = itemToVoid.reduce((sum, item) => sum + item.amount, 0);
+    //                 setTotal(prevTotal => prevTotal - totalToSubtract);
+    //             } else if (itemToVoid) {
 
-                    setItems(prevItems => prevItems.filter(item => item !== itemToVoid));
-                    setTotal(prevTotal => prevTotal - itemToVoid.amount);
+    //                 setItems(prevItems => prevItems.filter(item => item !== itemToVoid));
+    //                 setTotal(prevTotal => prevTotal - itemToVoid.amount);
+    //             }
+
+    //             setShowVoidModal(false);
+    //             setAdminPassword('');
+    //             setItemToVoid(null);
+    //         } else {
+    //             alert('Invalid admin password.');
+    //         }
+    //     } catch (error) {
+    //         console.error('Error fetching user data or verifying password:', error);
+    //         alert('Error verifying admin password.');
+    //     }
+    // };
+
+
+    const handleVoidSubmit = () => {
+        if (Array.isArray(itemToVoid)) {
+            setItems(prevItems => prevItems.filter(item => !itemToVoid.includes(item)));
+            const totalToSubtract = itemToVoid.reduce((sum, item) => sum + item.amount, 0);
+            setTotal(prevTotal => prevTotal - totalToSubtract);
+        } else if (itemToVoid) {
+            setItems(prevItems => prevItems.filter(item => item !== itemToVoid));
+            setTotal(prevTotal => prevTotal - itemToVoid.amount);
+        }
+
+        setShowVoidModal(false);
+        setAdminPassword('');
+        setItemToVoid(null);
+    };
+
+    const handleAdminPasswordChange = async (e) => {
+        const password = e.target.value;
+        setAdminPassword(password);
+
+        if (password.length > 0) {
+            try {
+                const usersResponse = await axios.get('http://localhost/listing/sampleData.php?type=users');
+                const users = usersResponse.data;
+
+                const isValid = users.some(user => user.role === 'admin' && user.password === password);
+
+                if (isValid) {
+                    handleVoidSubmit();
+                } else {
+                    // alert('Invalid admin password.');
                 }
-
-                setShowVoidModal(false);
-                setAdminPassword('');
-                setItemToVoid(null);
-            } else {
-                alert('Invalid admin password.');
+            } catch (error) {
+                console.error('Error fetching user data or verifying password:', error);
+                alert('Error verifying admin password.');
             }
-        } catch (error) {
-            console.error('Error fetching user data or verifying password:', error);
-            alert('Error verifying admin password.');
         }
     };
 
@@ -314,17 +358,41 @@ const Dashboard = ({ isVisible, onClose }) => {
 
         const username = getCurrentUsername();
         const savedTransactions = JSON.parse(localStorage.getItem('savedTransactions')) || [];
-        const newTransaction = { items, total, username }; // Include username with the transaction
+        const lastId = localStorage.getItem('lastTransactionId') || 0;
+        const newTransactionId = parseInt(lastId) + 1;
+
+        const newTransaction = { id: newTransactionId, items, total, username };
         savedTransactions.push(newTransaction);
+
         localStorage.setItem('savedTransactions', JSON.stringify(savedTransactions));
+        localStorage.setItem('lastTransactionId', newTransactionId);
+
         resetTransaction();
     };
 
 
+    // const handleLoadTransaction = (transactionId) => {
+    //     const transactions = JSON.parse(localStorage.getItem('savedTransactions')) || [];
+    //     const transactionToLoad = transactions.find(transaction => transaction.id === transactionId);
 
-    const handleLoadTransaction = (index) => {
+    //     if (transactionToLoad) {
+    //         setItems(transactionToLoad.items);
+    //         setTotal(transactionToLoad.total);
+
+    //         const updatedTransactions = transactions.filter(transaction => transaction.id !== transactionId);
+    //         localStorage.setItem('savedTransactions', JSON.stringify(updatedTransactions));
+    //     } else {
+    //         alert("No matching transaction found or it's not yours.");
+    //     }
+
+    //     setShowModal(false);
+    // };
+
+
+
+    const handleLoadTransaction = (id) => {
         if (items.length > 0) {
-            alert("Please complete the current transaction before loading another.");
+            // alert("Please complete the current transaction before loading another.");
             return;
         }
 
@@ -334,31 +402,25 @@ const Dashboard = ({ isVisible, onClose }) => {
         const savedTransactions = JSON.parse(localStorage.getItem('savedTransactions')) || [];
         console.log("Saved Transactions:", savedTransactions);
 
-        // Filter transactions by username and get the correct index
         const filteredTransactions = savedTransactions.filter(transaction => transaction.username === username);
         console.log("Filtered Transactions:", filteredTransactions);
 
-        // Directly access the transaction by index
-        if (index >= 0 && index < filteredTransactions.length) {
-            const transactionToLoad = filteredTransactions[index];
-            console.log("Transaction to Load:", transactionToLoad);
+        const transactionToLoad = filteredTransactions.find(transaction => transaction.id === id);
+        console.log("Transaction to Load:", transactionToLoad);
 
-            if (transactionToLoad) {
-                setItems(transactionToLoad.items);
-                setTotal(transactionToLoad.total);
+        if (transactionToLoad) {
+            setItems(transactionToLoad.items);
+            setTotal(transactionToLoad.total);
 
-                // Remove the loaded transaction from localStorage
-                savedTransactions.splice(savedTransactions.findIndex(transaction => transaction === transactionToLoad), 1);
-                localStorage.setItem('savedTransactions', JSON.stringify(savedTransactions));
+            const updatedTransactions = savedTransactions.filter(transaction => transaction.id !== id);
+            localStorage.setItem('savedTransactions', JSON.stringify(updatedTransactions));
 
-                setSelectedTransactionIndex(null);
-            } else {
-                alert("No matching transaction found or it's not yours.");
-            }
+            setSelectedTransactionIndex(null);
         } else {
-            alert("Invalid transaction index.");
+            alert("No matching transaction found or it's not yours.");
         }
     };
+
 
 
 
@@ -388,14 +450,14 @@ const Dashboard = ({ isVisible, onClose }) => {
             return;
         }
 
-        // Retrieve the full name of the currently logged-in user from localStorage
+
         const fullName = localStorage.getItem('name');
         const username = localStorage.getItem('currentUsername');
 
-        // Get the current date and time
+
         const currentDateTime = new Date().toLocaleString();
 
-        // Proceed if validation passes
+
         const paidTransactions = JSON.parse(localStorage.getItem('paidTransactions')) || [];
         const newTransaction = { items, total, cashTendered: cash, change, fullName, username, dateTime: currentDateTime };
         paidTransactions.push(newTransaction);
@@ -449,7 +511,7 @@ const Dashboard = ({ isVisible, onClose }) => {
 
     useEffect(() => {
         const handleKeyDown = (event) => {
-            if (event.key === 'Q') {
+            if (event.ctrlKey && event.key === '1') {
                 event.preventDefault();
                 if (quantityRef.current) {
                     quantityRef.current.focus();
@@ -459,7 +521,7 @@ const Dashboard = ({ isVisible, onClose }) => {
                 return;
             }
 
-            if (event.key === 'B') {
+            if (event.ctrlKey && event.key === '2') {
                 event.preventDefault();
                 if (barcodeRef.current) {
                     barcodeRef.current.focus();
@@ -467,6 +529,56 @@ const Dashboard = ({ isVisible, onClose }) => {
                     console.error('quantityRef.current is null');
                 }
                 return;
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown);
+        };
+    }, []);
+
+    const [showTransactionsModal, setShowTransactionsModal] = useState(false);
+
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if (e.ctrlKey && e.key === 'F12') {
+                setShowTransactionsModal(true);
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown);
+        };
+    }, []);
+
+
+    useEffect(() => {
+        const handleKeyDown = (event) => {
+            if (event.ctrlKey && event.key === '-') {
+                setIsVoidModalVisible(true);
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown);
+        };
+    }, []);
+
+
+    useEffect(() => {
+        const handleKeyDown = (event) => {
+            if (event.key === 'Escape') {
+                setShowVoidModal(false);
+
+                // Ensure quantityRef is properly defined and focused
+                if (quantityRef.current) {
+                    quantityRef.current.focus();
+                }
             }
         };
 
@@ -493,20 +605,37 @@ const Dashboard = ({ isVisible, onClose }) => {
                 toggleCashInputVisibility={toggleCashInputVisibility}
             />
             <ReportsModal isVisible={showReportsModal} onClose={() => setShowReportsModal(false)} />
+            <TransactionsModal
+                isVisible={showTransactionsModal}
+                onClose={() => setShowTransactionsModal(false)}
+                onLoadTransaction={handleLoadTransaction}
+            />
+
+            <VoidModal
+                isVisible={isVoidModalVisible}
+                onClose={() => setIsVoidModalVisible(false)}
+                items={items}
+                onVoidItem={handleVoidItems}
+                adminPassword={adminPassword}
+                onAdminPasswordChange={handleAdminPasswordChange}
+            />
 
 
             <div className="flex flex-col md:flex-row min-h-screen">
                 {!isLoggedIn && (
                     <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-75 z-50">
-                        <div className="bg-white p-6 rounded-lg shadow-lg">
-                            <h1 className="text-2xl font-bold mb-4 text-center">Login</h1>
+                        <div className="bg-white p-10 rounded-lg shadow-lg w-full max-w-lg">
+                            <h1 className="text-3xl font-bold mb-6 text-center">Login</h1>
                             <form onSubmit={handleLogin}>
-                                <div className="mb-4">
-                                    <label htmlFor="username" className="block text-gray-700 mb-2">Username</label>
+                                <div className="mb-6">
+                                    <label htmlFor="username" className="block text-gray-700 mb-2 text-lg">Username</label>
                                     <select
                                         value={username}
-                                        onChange={(e) => setUsername(e.target.value)}
-                                        className="border text-black rounded-md px-3 py-2 w-full"
+                                        onChange={(e) => {
+                                            setUsername(e.target.value);
+                                            handleLogin(e.target.value, password);
+                                        }}
+                                        className="border text-black rounded-md px-4 py-3 w-full text-lg"
                                         id="username"
                                         required
                                     >
@@ -516,23 +645,24 @@ const Dashboard = ({ isVisible, onClose }) => {
                                         ))}
                                     </select>
                                 </div>
-                                <div className="mb-4">
-                                    <label htmlFor="password" className="block text-gray-700 mb-2">Password</label>
+                                <div className="mb-6">
+                                    <label htmlFor="password" className="block text-gray-700 mb-2 text-lg">Password</label>
                                     <input
                                         value={password}
-                                        onChange={(e) => setPassword(e.target.value)}
-                                        className="border text-black rounded-md px-3 py-2 w-full"
+                                        onChange={(e) => {
+                                            setPassword(e.target.value);
+                                            handleLogin(username, e.target.value);
+                                        }}
+                                        className="border text-black rounded-md px-4 py-3 w-full text-lg"
                                         id="password"
                                         type="password"
                                         required
                                     />
                                 </div>
-                                <div className="flex justify-center">
-                                    <button type="submit" className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">Login</button>
-                                </div>
                             </form>
                         </div>
                     </div>
+
                 )}
 
                 {isLoggedIn && (
@@ -557,9 +687,11 @@ const Dashboard = ({ isVisible, onClose }) => {
 
 
 
-                        <div className="flex-grow bg-[#CAA14A] p-8 ">
+                        <div className="flex-grow bg-[#6F4E37] p-8 ">
                             <div className="flex justify-between items-center mb-6 md:mt-8">
-                                <h2 className="text-3xl font-bold text-black">Welcome, {fullname}</h2>
+                                <h2 className="text-3xl font-bold text-[#FFFDD0] ">Coffee Thingy</h2>
+
+                                <h2 className="text-3xl font-bold text-[#FFFDD0] ">Welcome, {fullname}</h2>
                             </div>
 
                             <div className="flex flex-col md:flex-row gap-8 ">
@@ -575,8 +707,10 @@ const Dashboard = ({ isVisible, onClose }) => {
                                                     onChange={(e) => setQuantity(e.target.value)}
                                                     className="border text-black rounded-md px-3 py-2 w-full"
                                                     required
-                                                    ref={quantityRef}
+                                                    ref={quantityRef} // Correct usage of ref
+                                                    autoFocus
                                                 />
+
                                             </div>
                                             <div className="mb-4">
                                                 <label htmlFor="barcode" className="block text-gray-700 font-bold mb-2">Barcode:</label>
@@ -603,48 +737,33 @@ const Dashboard = ({ isVisible, onClose }) => {
                                         <table className="min-w-full bg-white border text-black border-gray-200 shadow-md rounded-md">
                                             <thead className="bg-gray-100 border-b border-gray-200">
                                                 <tr>
+                                                    <th className="px-4 py-2 text-left text-base font-medium text-gray-500 uppercase tracking-wider">ID</th>
                                                     <th className="px-4 py-2 text-left text-base font-medium text-gray-500 uppercase tracking-wider">Quantity</th>
                                                     <th className="px-4 py-2 text-left text-base font-medium text-gray-500 uppercase tracking-wider">Product</th>
                                                     <th className="px-4 py-2 text-left text-base font-medium text-gray-500 uppercase tracking-wider">Price</th>
                                                     <th className="px-4 py-2 text-left text-base font-medium text-gray-500 uppercase tracking-wider">Amount</th>
-                                                    <th className="px-4 py-2 text-left text-base font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                                    {/* <th className="px-4 py-2 text-left text-base font-medium text-gray-500 uppercase tracking-wider">Actions</th> */}
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 {items.map((item, index) => (
                                                     <tr key={index} className={index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
-                                                        <td className="px-4 py-2 text-sm flex items-center">
-                                                            <button
-                                                                onClick={() => decreaseQuantity(item.product)}
-                                                                className="bg-yellow-500 hover:bg-yellow-600 text-white px-2 py-1 rounded mr-2" // margin-right
-                                                            >
-                                                                -
-                                                            </button>
-
-                                                            {item.quantity}
-
-                                                            <button
-                                                                onClick={() => increaseQuantity(item.product)}
-                                                                className="bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded ml-2" // margin-left
-                                                            >
-                                                                +
-                                                            </button>
-                                                        </td>
+                                                        <td className="px-4 py-2 text-sm ">{item.id}</td>
+                                                        <td className="px-4 py-2 text-sm ">{item.quantity}</td>
                                                         <td className="px-4 py-2 text-base">{item.product}</td>
                                                         <td className="px-4 py-2 text-base">${item.price.toFixed(2)}</td>
                                                         <td className="px-4 py-2 text-base">${item.amount.toFixed(2)}</td>
-                                                        <td className="px-4 py-2 text-base">
+                                                        {/* <td className="px-4 py-2 text-base">
                                                             <button
                                                                 onClick={() => handleVoidItems(item)}
                                                                 className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded"
                                                             >
                                                                 Void
                                                             </button>
-                                                        </td>
+                                                        </td> */}
                                                     </tr>
                                                 ))}
                                             </tbody>
-
                                         </table>
                                     </div>
 
@@ -694,8 +813,8 @@ const Dashboard = ({ isVisible, onClose }) => {
                             </div>
 
 
-                            <div className="mb-4">
-                                <h2 className="text-lg font-semibold">Load Transaction</h2>
+                            {/* <div className="mb-4">
+                                <h2 className="text-lg font-semibold text-[#FFFDD0] mt-5">Load Transaction</h2>
                                 <div className="space-y-2">
                                     {JSON.parse(localStorage.getItem('savedTransactions'))?.filter(transaction => transaction.username === getCurrentUsername()).map((transaction, index) => {
 
@@ -719,7 +838,7 @@ const Dashboard = ({ isVisible, onClose }) => {
                                         );
                                     })}
                                 </div>
-                            </div>
+                            </div> */}
 
                             {showCustomerNameModal && (
                                 <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50">
@@ -761,31 +880,28 @@ const Dashboard = ({ isVisible, onClose }) => {
                 <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-75 z-50">
                     <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-sm">
                         <h2 className="text-xl font-bold mb-4">Void Item</h2>
-                        <form onSubmit={handleVoidSubmit}>
-                            <p className="mb-4">Are you sure you want to void this item?</p>
-                            <div className="mb-4">
-                                <label htmlFor="adminPassword" className="block text-gray-700 mb-2">Admin Password</label>
-                                <input
-                                    type="password"
-                                    value={adminPassword}
-                                    onChange={(e) => setAdminPassword(e.target.value)}
-                                    id="adminPassword"
-                                    className="border text-black rounded-md px-3 py-2 w-full"
-                                    required
-                                    autoFocus
-                                />
-                            </div>
-                            <div className="flex justify-between">
-                                <button type="submit" className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded">Void</button>
-                                <button
-                                    type="button"
-                                    onClick={() => setShowVoidModal(false)}
-                                    className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded"
-                                >
-                                    Cancel
-                                </button>
-                            </div>
-                        </form>
+                        <p className="mb-4">Are you sure you want to void this item?</p>
+                        <div className="mb-4">
+                            <label htmlFor="adminPassword" className="block text-gray-700 mb-2">Admin Password</label>
+                            <input
+                                type="password"
+                                value={adminPassword}
+                                onChange={handleAdminPasswordChange}
+                                id="adminPassword"
+                                className="border text-black rounded-md px-3 py-2 w-full"
+                                required
+                                autoFocus
+                            />
+                        </div>
+                        {/* <div className="flex justify-between">
+                            <button
+                                type="button"
+                                onClick={() => setShowVoidModal(false)}
+                                className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded"
+                            >
+                                Cancel
+                            </button>
+                        </div> */}
                     </div>
                 </div>
             )}
