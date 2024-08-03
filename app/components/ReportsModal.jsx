@@ -16,14 +16,13 @@ const ReportsModal = ({ isVisible, onClose }) => {
     }, [isVisible]);
 
     const parseDate = (dateString) => {
-
         return new Date(dateString);
     };
 
     const filteredTransactions = transactions.filter(transaction => {
         const transactionDate = parseDate(transaction.dateTime);
-        const start = startDate ? parseDate(`${startDate}, 00:00:00 AM`) : null;
-        const end = endDate ? parseDate(`${endDate}, 23:59:59 PM`) : null;
+        const start = startDate ? new Date(startDate) : null;
+        const end = endDate ? new Date(new Date(endDate).setHours(23, 59, 59, 999)) : null;
 
         return (
             (!filterName || transaction.fullName === filterName) &&
@@ -31,6 +30,23 @@ const ReportsModal = ({ isVisible, onClose }) => {
             (!end || transactionDate <= end)
         );
     });
+
+    const getTotalForTransactions = (transactionsList) => {
+        return transactionsList.reduce((total, transaction) => total + transaction.total, 0);
+    };
+
+    const getTodayTotal = () => {
+        const today = new Date();
+        const startOfToday = new Date(today.setHours(0, 0, 0, 0));
+        const endOfToday = new Date(today.setHours(23, 59, 59, 999));
+
+        const todayTransactions = transactions.filter(transaction => {
+            const transactionDate = parseDate(transaction.dateTime);
+            return transactionDate >= startOfToday && transactionDate <= endOfToday;
+        });
+
+        return getTotalForTransactions(todayTransactions);
+    };
 
     useEffect(() => {
         const handleKeyDown = (event) => {
@@ -79,7 +95,7 @@ const ReportsModal = ({ isVisible, onClose }) => {
                 <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-4xl">
                     <div className="flex justify-between items-center mb-4">
                         <h2 className="text-2xl font-bold">Transaction Reports</h2>
-                        <button onClick={onClose} className="text-red-500 font-bold">Close</button>
+                        {/* <button onClick={onClose} className="text-red-500 font-bold">Close</button> */}
                     </div>
                     <div className="mb-4 space-y-4">
                         <input
@@ -88,6 +104,7 @@ const ReportsModal = ({ isVisible, onClose }) => {
                             value={filterName}
                             onChange={e => setFilterName(e.target.value)}
                             className="border border-gray-300 rounded p-2 w-full"
+                            autoFocus
                         />
                         <input
                             type="date"
@@ -104,16 +121,10 @@ const ReportsModal = ({ isVisible, onClose }) => {
                             className="border border-gray-300 rounded p-2 w-full"
                         />
                     </div>
-                    {/* <div className="mb-4">
-                        <button onClick={() => printContent('allTransactions')} className="bg-blue-500 text-white px-4 py-2 rounded mr-2">Print All</button>
-                        <button
-                            onClick={() => printContent('filteredTransactions')}
-                            className="bg-blue-500 text-white px-4 py-2 rounded"
-                            disabled={!isFilterApplied}
-                        >
-                            Print Filtered
-                        </button>
-                    </div> */}
+                    <div className="mb-4">
+                        <h3 className="text-xl font-bold">Total of Today's Transactions: ₱{getTodayTotal().toFixed(2)}</h3>
+                        <h3 className="text-xl font-bold">Total for Filtered Transactions: ₱{getTotalForTransactions(filteredTransactions).toFixed(2)}</h3>
+                    </div>
                     <div id="allTransactions" className="hidden">
                         {transactions.length === 0 ? (
                             <p>No transactions found.</p>
@@ -122,9 +133,9 @@ const ReportsModal = ({ isVisible, onClose }) => {
                                 <div key={index} className="border p-4 rounded report-item">
                                     <p><strong>User:</strong> {transaction.fullName} ({transaction.username})</p>
                                     <p><strong>Date/Time:</strong> {transaction.dateTime}</p>
-                                    <p><strong>Total:</strong> ${transaction.total.toFixed(2)}</p>
+                                    <p><strong>Total:</strong> ₱{transaction.total.toFixed(2)}</p>
                                     <p><strong>Cash Tendered:</strong> ${transaction.cashTendered.toFixed(2)}</p>
-                                    <p><strong>Change:</strong> ${transaction.change.toFixed(2)}</p>
+                                    <p><strong>Change:</strong> ₱{transaction.change.toFixed(2)}</p>
                                     <div>
                                         <strong>Items:</strong>
                                         <ul className="list-disc pl-5">

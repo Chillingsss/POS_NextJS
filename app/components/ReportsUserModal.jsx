@@ -33,6 +33,23 @@ const ReportsUserModal = ({ isVisible, onClose }) => {
         );
     });
 
+    const getTotalForDateRange = (transactions) => {
+        return transactions.reduce((total, transaction) => total + transaction.total, 0);
+    };
+
+    const getTodayTotal = () => {
+        const today = new Date();
+        const startOfToday = new Date(today.setHours(0, 0, 0, 0));
+        const endOfToday = new Date(today.setHours(23, 59, 59, 999));
+
+        const todayTransactions = transactions.filter(transaction => {
+            const transactionDate = parseDate(transaction.dateTime);
+            return transactionDate >= startOfToday && transactionDate <= endOfToday;
+        });
+
+        return getTotalForDateRange(todayTransactions);
+    };
+
     useEffect(() => {
         const handleKeyDown = (event) => {
             if (event.key === 'Escape') {
@@ -90,7 +107,6 @@ const ReportsUserModal = ({ isVisible, onClose }) => {
                         <button onClick={onClose} className="text-red-500 font-bold">Close</button>
                     </div>
                     <div className="mb-4 space-y-4">
-
                         <input
                             type="date"
                             placeholder="Start date"
@@ -106,6 +122,10 @@ const ReportsUserModal = ({ isVisible, onClose }) => {
                             className="border border-gray-300 rounded p-2 w-full"
                         />
                     </div>
+                    <div className="mb-4">
+                        <h3 className="text-xl font-bold">Total of Today's Transactions: ₱{getTodayTotal().toFixed(2)}</h3>
+                        <h3 className="text-xl font-bold">Total for Selected Date Range: ₱{getTotalForDateRange(filteredTransactions).toFixed(2)}</h3>
+                    </div>
                     <div id="userTransactions" className="overflow-y-auto max-h-96">
                         {filteredTransactions.length === 0 ? (
                             <p>No transactions found.</p>
@@ -114,14 +134,14 @@ const ReportsUserModal = ({ isVisible, onClose }) => {
                                 <div key={index} className="border p-4 rounded report-item">
                                     <p><strong>User:</strong> {transaction.fullName} ({transaction.username})</p>
                                     <p><strong>Date/Time:</strong> {transaction.dateTime}</p>
-                                    <p><strong>Total:</strong> ${transaction.total.toFixed(2)}</p>
+                                    <p><strong>Total:</strong> ₱{transaction.total.toFixed(2)}</p>
                                     <p><strong>Cash Tendered:</strong> ${transaction.cashTendered.toFixed(2)}</p>
-                                    <p><strong>Change:</strong> ${transaction.change.toFixed(2)}</p>
+                                    <p><strong>Change:</strong> ₱{transaction.change.toFixed(2)}</p>
                                     <div>
                                         <strong>Items:</strong>
                                         <ul className="list-disc pl-5">
                                             {transaction.items.map((item, idx) => (
-                                                <li key={idx}>{item.quantity} x {item.product} - ${item.amount.toFixed(2)}</li>
+                                                <li key={idx}>{item.quantity} x {item.product} - ₱{item.amount.toFixed(2)}</li>
                                             ))}
                                         </ul>
                                     </div>

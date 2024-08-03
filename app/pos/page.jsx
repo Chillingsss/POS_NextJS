@@ -296,7 +296,7 @@ const Dashboard = ({ isVisible, onClose }) => {
         setAdminPassword('');
         setItemToVoid(null);
 
-        setHasUnsavedTransactions(false); // Reset to false as the transaction is saved
+        setHasUnsavedTransactions(false);
         setIsTransactionLoaded(false);
         if (quantityRef.current) {
             quantityRef.current.focus();
@@ -397,13 +397,12 @@ const Dashboard = ({ isVisible, onClose }) => {
 
         localStorage.setItem('savedTransactions', JSON.stringify(savedTransactions));
 
-        // Update lastTransactionId only if there are transactions for all users
         const allTransactions = JSON.parse(localStorage.getItem('savedTransactions')) || [];
         const allLastId = Math.max(...allTransactions.map(t => t.id), 0);
         localStorage.setItem('lastTransactionId', allLastId);
 
-        setHasUnsavedTransactions(false); // Reset to false as the transaction is saved
-        setIsTransactionLoaded(false); // Ensure no transaction is loaded
+        setHasUnsavedTransactions(false);
+        setIsTransactionLoaded(false);
         resetTransaction();
     };
 
@@ -453,7 +452,7 @@ const Dashboard = ({ isVisible, onClose }) => {
             localStorage.setItem('savedTransactions', JSON.stringify(updatedTransactions));
 
             setSelectedTransactionIndex(null);
-            setHasUnsavedTransactions(false); // Ensure no unsaved transactions
+            setHasUnsavedTransactions(false);
         } else {
             alert("No matching transaction found or it's not yours.");
         }
@@ -831,7 +830,7 @@ const Dashboard = ({ isVisible, onClose }) => {
                         </div>
 
                         <div className="flex flex-col md:flex-row gap-8 ">
-                            <div className="w-full md:w-1/2 p-4 bg-gray-200 rounded-lg shadow-md">
+                            <div className="w-full md:w-1/2 p-4 bg-[#FFFDD0] rounded-lg shadow-md">
                                 <form onSubmit={(e) => e.preventDefault()}>
                                     <div className="grid grid-cols-1 gap-4">
                                         <div className="mb-4">
@@ -841,7 +840,7 @@ const Dashboard = ({ isVisible, onClose }) => {
                                                 id="quantity"
                                                 value={quantity}
                                                 onChange={(e) => setQuantity(e.target.value)}
-                                                className="border text-black rounded-md px-3 py-2 w-full"
+                                                className="border text-white rounded-md px-3 py-2 w-full bg-[#6F4E37]"
                                                 required
                                                 ref={quantityRef}
                                                 autoFocus
@@ -849,13 +848,13 @@ const Dashboard = ({ isVisible, onClose }) => {
 
                                         </div>
                                         <div className="mb-4">
-                                            <label htmlFor="barcode" className="block text-gray-700 font-bold mb-2">Barcode:</label>
+                                            <label htmlFor="barcode" className="block text-gray-700 font-bold mb-2 ">Barcode:</label>
                                             <input
                                                 type="text"
                                                 id="barcode"
                                                 value={barcode}
                                                 onChange={(e) => setBarcode(e.target.value)}
-                                                className="border text-black rounded-md px-3 py-2 w-full"
+                                                className="border text-white rounded-md px-3 py-2 w-full bg-[#6F4E37]"
                                                 required
                                                 ref={barcodeRef}
                                             />
@@ -864,31 +863,31 @@ const Dashboard = ({ isVisible, onClose }) => {
                                 </form>
                             </div>
 
-                            <div className="w-full md:w-1/2 p-4 bg-gray-200 rounded-lg shadow-md">
+                            <div className="w-full md:w-1/2 p-4 bg-[#FFFDD0] rounded-lg shadow-md">
                                 <div className="mb-4 flex justify-between">
                                     <h3 className="text-2xl text-gray-700 font-bold">Current Sale</h3>
-                                    <h3 className="text-5xl text-gray-700 font-bold">Total: ${total.toFixed(2)}</h3>
+                                    <h3 className="text-5xl text-gray-700 font-bold">Total: ₱{total.toFixed(2)}</h3>
                                 </div>
                                 <div className="overflow-x-auto h-72">
-                                    <table className="min-w-full bg-white border text-black border-gray-200 shadow-md rounded-md">
-                                        <thead className="bg-gray-100 border-b border-gray-200">
+                                    <table className="min-w-full border text-black border-gray-200 shadow-md rounded-md bg-[#6F4E37]">
+                                        <thead className="bg-[#6F4E37] border-b border-gray-200">
                                             <tr>
-                                                <th className="px-4 py-2 text-left text-base font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                                                <th className="px-4 py-2 text-left text-base font-medium text-gray-500 uppercase tracking-wider">Quantity</th>
-                                                <th className="px-4 py-2 text-left text-base font-medium text-gray-500 uppercase tracking-wider">Product</th>
-                                                <th className="px-4 py-2 text-left text-base font-medium text-gray-500 uppercase tracking-wider">Price</th>
-                                                <th className="px-4 py-2 text-left text-base font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                                                <th className="px-4 py-2 text-left text-base font-medium text-white uppercase tracking-wider">ID</th>
+                                                <th className="px-4 py-2 text-left text-base font-medium text-white uppercase tracking-wider">Quantity</th>
+                                                <th className="px-4 py-2 text-left text-base font-medium text-white uppercase tracking-wider">Product</th>
+                                                <th className="px-4 py-2 text-left text-base font-medium text-white uppercase tracking-wider">Price</th>
+                                                <th className="px-4 py-2 text-left text-base font-medium text-white uppercase tracking-wider">Amount</th>
                                                 {/* <th className="px-4 py-2 text-left text-base font-medium text-gray-500 uppercase tracking-wider">Actions</th> */}
                                             </tr>
                                         </thead>
                                         <tbody>
                                             {items.map((item, index) => (
                                                 <tr key={index} className={index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
-                                                    <td className="px-4 py-2 text-sm ">{item.id}</td>
-                                                    <td className="px-4 py-2 text-sm ">{item.quantity}</td>
-                                                    <td className="px-4 py-2 text-base">{item.product}</td>
-                                                    <td className="px-4 py-2 text-base">${item.price.toFixed(2)}</td>
-                                                    <td className="px-4 py-2 text-base">${item.amount.toFixed(2)}</td>
+                                                    <td className="px-4 py-2 text-lg ">{item.id}</td>
+                                                    <td className="px-4 py-2 text-lg ">{item.quantity}</td>
+                                                    <td className="px-4 py-2 text-lg">{item.product}</td>
+                                                    <td className="px-4 py-2 text-lg">${item.price.toFixed(2)}</td>
+                                                    <td className="px-4 py-2 text-lg">${item.amount.toFixed(2)}</td>
                                                     {/* <td className="px-4 py-2 text-base">
                                                             <button
                                                                 onClick={() => handleVoidItems(item)}
@@ -922,7 +921,7 @@ const Dashboard = ({ isVisible, onClose }) => {
                                         </div>
                                         {change !== '' && (
                                             <div className="mt-4 flex justify-end">
-                                                <h3 className="text-3xl text-gray-700 font-bold">Change: ${change.toFixed(2)}</h3>
+                                                <h3 className="text-3xl text-gray-700 font-bold">Change: ₱{change.toFixed(2)}</h3>
                                             </div>
                                         )}
                                     </div>
