@@ -8,7 +8,6 @@ const TransactionsModal = ({ isVisible, onClose, onLoadTransaction }) => {
 
     // Function for getting the current username
     const getCurrentUsername = () => {
-
         return localStorage.getItem('currentUsername');
     };
 
@@ -16,9 +15,7 @@ const TransactionsModal = ({ isVisible, onClose, onLoadTransaction }) => {
         if (isVisible) {
             const savedTransactions = JSON.parse(localStorage.getItem('savedTransactions')) || [];
             const currentUser = getCurrentUsername();
-            console.log("Current User:", currentUser);
             const userTransactions = savedTransactions.filter(transaction => transaction.username === currentUser);
-            console.log("User Transactions:", userTransactions);
             setTransactions(userTransactions);
         }
     }, [isVisible]);
@@ -79,6 +76,7 @@ const TransactionsModal = ({ isVisible, onClose, onLoadTransaction }) => {
                                             <th className="py-2 px-4 border-b">ID</th>
                                             <th className="py-2 px-4 border-b">User</th>
                                             <th className="py-2 px-4 border-b">Date/Time</th>
+                                            <th className="py-2 px-4 border-b">Items</th>
                                             <th className="py-2 px-4 border-b">Total</th>
                                         </tr>
                                     </thead>
@@ -88,6 +86,20 @@ const TransactionsModal = ({ isVisible, onClose, onLoadTransaction }) => {
                                                 <td className="py-2 px-4 border-b">{transaction.id}</td>
                                                 <td className="py-2 px-4 border-b">{transaction.username}</td>
                                                 <td className="py-2 px-4 border-b">{transaction.dateTime}</td>
+                                                <td className="py-2 px-4 border-b">
+                                                    <div className="overflow-y-auto max-h-40">
+                                                        <table className="w-full border-collapse">
+                                                            <tbody>
+                                                                {transaction.items.map((item, itemIndex) => (
+                                                                    <tr key={itemIndex}>
+                                                                        <td className="border-b px-2 py-1">{item.product}</td>
+                                                                        <td className="border-b px-2 py-1">{item.quantity}</td>
+                                                                    </tr>
+                                                                ))}
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </td>
                                                 <td className="py-2 px-4 border-b">${transaction.total.toFixed(2)}</td>
                                             </tr>
                                         ))}

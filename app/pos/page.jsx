@@ -77,39 +77,39 @@ const Dashboard = ({ isVisible, onClose }) => {
         fetchUsers();
     }, []);
 
-    // const fetchUsers = () => {
-    //     axios.get('http://localhost/listing/sampleData.php', {
-    //         params: { type: 'users' }
-    //     })
-    //         .then(response => {
-    //             if (Array.isArray(response.data)) {
-    //                 setUsers(response.data);
-    //                 const usernames = response.data.map(user => user.username);
-    //                 setUsernames(usernames);
-    //             } else {
-    //                 console.error('Response data is not an array:', response.data);
-    //             }
-    //         })
-    //         .catch(error => console.error('Error fetching users:', error));
-    // };
+    const fetchUsers = () => {
+        axios.get('http://localhost/listing/sampleData.php', {
+            params: { type: 'users' }
+        })
+            .then(response => {
+                if (Array.isArray(response.data)) {
+                    setUsers(response.data);
+                    const usernames = response.data.map(user => user.username);
+                    setUsernames(usernames);
+                } else {
+                    console.error('Response data is not an array:', response.data);
+                }
+            })
+            .catch(error => console.error('Error fetching users:', error));
+    };
 
-    // const handleLogin = (username, password) => {
-    //     if (username && password) {
-    //         const user = users.find(u => u.username === username && u.password === password);
+    const handleLogin = (username, password) => {
+        if (username && password) {
+            const user = users.find(u => u.username === username && u.password === password);
 
-    //         if (user) {
-    //             setIsLoggedIn(true);
-    //             localStorage.setItem('name', user.fullname);
-    //             localStorage.setItem('role', user.role);
-    //             localStorage.setItem('currentUsername', username);
-    //             setFullname(user.fullname);
-    //             setRole(user.role);
-    //             setIsAdmin(user.role === 'admin');
-    //         } else {
-    //             // alert('Invalid username or password');
-    //         }
-    //     }
-    // };
+            if (user) {
+                setIsLoggedIn(true);
+                localStorage.setItem('name', user.fullname);
+                localStorage.setItem('role', user.role);
+                localStorage.setItem('currentUsername', username);
+                setFullname(user.fullname);
+                setRole(user.role);
+                setIsAdmin(user.role === 'admin');
+            } else {
+                // alert('Invalid username or password');
+            }
+        }
+    };
 
     const handleLogout = () => {
         setIsLoggedIn(false);
@@ -122,6 +122,8 @@ const Dashboard = ({ isVisible, onClose }) => {
         localStorage.removeItem('name');
         localStorage.removeItem('role');
         localStorage.removeItem('currentUsername');
+
+        router.push('/');
 
     };
 
@@ -289,6 +291,8 @@ const Dashboard = ({ isVisible, onClose }) => {
             setItems(prevItems => prevItems.filter(item => !itemToVoid.includes(item)));
             const totalToSubtract = itemToVoid.reduce((sum, item) => sum + item.amount, 0);
             setTotal(prevTotal => prevTotal - totalToSubtract);
+
+
         } else if (itemToVoid) {
             setItems(prevItems => prevItems.filter(item => item !== itemToVoid));
             setTotal(prevTotal => prevTotal - itemToVoid.amount);
@@ -297,6 +301,10 @@ const Dashboard = ({ isVisible, onClose }) => {
         setShowVoidModal(false);
         setAdminPassword('');
         setItemToVoid(null);
+        if (quantityRef.current) {
+            quantityRef.current.focus();
+        }
+
     };
 
     const handleAdminPasswordChange = async (e) => {
@@ -369,17 +377,44 @@ const Dashboard = ({ isVisible, onClose }) => {
 
         const username = getCurrentUsername();
         const savedTransactions = JSON.parse(localStorage.getItem('savedTransactions')) || [];
-        const lastId = localStorage.getItem('lastTransactionId') || 0;
-        const newTransactionId = parseInt(lastId) + 1;
 
-        const newTransaction = { id: newTransactionId, items, total, username };
+
+        const userTransactions = savedTransactions.filter(transaction => transaction.username === username);
+
+
+        let newTransactionId;
+        if (userTransactions.length === 0) {
+
+            newTransactionId = 1;
+        } else {
+
+            const lastId = Math.max(...userTransactions.map(t => t.id));
+            newTransactionId = lastId + 1;
+        }
+
+
+        const dateTime = new Date().toISOString();
+
+        const newTransaction = {
+            id: newTransactionId,
+            items,
+            total,
+            username,
+            dateTime
+        };
         savedTransactions.push(newTransaction);
 
         localStorage.setItem('savedTransactions', JSON.stringify(savedTransactions));
-        localStorage.setItem('lastTransactionId', newTransactionId);
+
+        // Update lastTransactionId only if there are transactions for all users
+        const allTransactions = JSON.parse(localStorage.getItem('savedTransactions')) || [];
+        const allLastId = Math.max(...allTransactions.map(t => t.id), 0);
+        localStorage.setItem('lastTransactionId', allLastId);
 
         resetTransaction();
     };
+
+
 
 
     // const handleLoadTransaction = (transactionId) => {
@@ -707,9 +742,9 @@ const Dashboard = ({ isVisible, onClose }) => {
 
                 )} */}
 
-                {isLoggedIn && (
-                    <div className='flex flex-col md:flex-grow  '>
-                        {/* <div className="bg-gray-900 text-white p-4 shadow-lg w-full md:w-64 md:fixed top-0 left-0 h-full flex flex-col">
+
+                <div className='flex flex-col md:flex-grow  '>
+                    {/* <div className="bg-gray-900 text-white p-4 shadow-lg w-full md:w-64 md:fixed top-0 left-0 h-full flex flex-col">
                             <h2 className="text-3xl font-bold mb-6">POS System</h2>
                             <ul className="space-y-4">
                                 <li className="text-lg font-semibold hover:text-gray-300">Dashboard</li>
@@ -729,73 +764,73 @@ const Dashboard = ({ isVisible, onClose }) => {
 
 
 
-                        <div className="flex-grow bg-[#6F4E37] p-8 ">
-                            <div className="flex justify-between items-center mb-6 md:mt-8">
-                                <h2 className="text-3xl font-bold text-[#FFFDD0] ">Coffee Thingy</h2>
+                    <div className="flex-grow bg-[#6F4E37] p-8 ">
+                        <div className="flex justify-between items-center mb-6 md:mt-8">
+                            <h2 className="text-3xl font-bold text-[#FFFDD0] ">Coffee Thingy</h2>
 
-                                <h2 className="text-3xl font-bold text-[#FFFDD0] ">Welcome, {fullname}</h2>
+                            <h2 className="text-3xl font-bold text-[#FFFDD0] ">Welcome, {fullname}</h2>
+                        </div>
+
+                        <div className="flex flex-col md:flex-row gap-8 ">
+                            <div className="w-full md:w-1/2 p-4 bg-gray-200 rounded-lg shadow-md">
+                                <form onSubmit={(e) => e.preventDefault()}>
+                                    <div className="grid grid-cols-1 gap-4">
+                                        <div className="mb-4">
+                                            <label htmlFor="quantity" className="block text-gray-700 font-bold mb-2">Quantity:</label>
+                                            <input
+                                                type="text"
+                                                id="quantity"
+                                                value={quantity}
+                                                onChange={(e) => setQuantity(e.target.value)}
+                                                className="border text-black rounded-md px-3 py-2 w-full"
+                                                required
+                                                ref={quantityRef}
+                                                autoFocus
+                                            />
+
+                                        </div>
+                                        <div className="mb-4">
+                                            <label htmlFor="barcode" className="block text-gray-700 font-bold mb-2">Barcode:</label>
+                                            <input
+                                                type="text"
+                                                id="barcode"
+                                                value={barcode}
+                                                onChange={(e) => setBarcode(e.target.value)}
+                                                className="border text-black rounded-md px-3 py-2 w-full"
+                                                required
+                                                ref={barcodeRef}
+                                            />
+                                        </div>
+                                    </div>
+                                </form>
                             </div>
 
-                            <div className="flex flex-col md:flex-row gap-8 ">
-                                <div className="w-full md:w-1/2 p-4 bg-gray-200 rounded-lg shadow-md">
-                                    <form onSubmit={(e) => e.preventDefault()}>
-                                        <div className="grid grid-cols-1 gap-4">
-                                            <div className="mb-4">
-                                                <label htmlFor="quantity" className="block text-gray-700 font-bold mb-2">Quantity:</label>
-                                                <input
-                                                    type="number"
-                                                    id="quantity"
-                                                    value={quantity}
-                                                    onChange={(e) => setQuantity(e.target.value)}
-                                                    className="border text-black rounded-md px-3 py-2 w-full"
-                                                    required
-                                                    ref={quantityRef} // Correct usage of ref
-                                                    autoFocus
-                                                />
-
-                                            </div>
-                                            <div className="mb-4">
-                                                <label htmlFor="barcode" className="block text-gray-700 font-bold mb-2">Barcode:</label>
-                                                <input
-                                                    type="text"
-                                                    id="barcode"
-                                                    value={barcode}
-                                                    onChange={(e) => setBarcode(e.target.value)}
-                                                    className="border text-black rounded-md px-3 py-2 w-full"
-                                                    required
-                                                    ref={barcodeRef}
-                                                />
-                                            </div>
-                                        </div>
-                                    </form>
+                            <div className="w-full md:w-1/2 p-4 bg-gray-200 rounded-lg shadow-md">
+                                <div className="mb-4 flex justify-between">
+                                    <h3 className="text-2xl text-gray-700 font-bold">Current Sale</h3>
+                                    <h3 className="text-5xl text-gray-700 font-bold">Total: ${total.toFixed(2)}</h3>
                                 </div>
-
-                                <div className="w-full md:w-1/2 p-4 bg-gray-200 rounded-lg shadow-md">
-                                    <div className="mb-4 flex justify-between">
-                                        <h3 className="text-2xl text-gray-700 font-bold">Current Sale</h3>
-                                        <h3 className="text-5xl text-gray-700 font-bold">Total: ${total.toFixed(2)}</h3>
-                                    </div>
-                                    <div className="overflow-x-auto h-72">
-                                        <table className="min-w-full bg-white border text-black border-gray-200 shadow-md rounded-md">
-                                            <thead className="bg-gray-100 border-b border-gray-200">
-                                                <tr>
-                                                    <th className="px-4 py-2 text-left text-base font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                                                    <th className="px-4 py-2 text-left text-base font-medium text-gray-500 uppercase tracking-wider">Quantity</th>
-                                                    <th className="px-4 py-2 text-left text-base font-medium text-gray-500 uppercase tracking-wider">Product</th>
-                                                    <th className="px-4 py-2 text-left text-base font-medium text-gray-500 uppercase tracking-wider">Price</th>
-                                                    <th className="px-4 py-2 text-left text-base font-medium text-gray-500 uppercase tracking-wider">Amount</th>
-                                                    {/* <th className="px-4 py-2 text-left text-base font-medium text-gray-500 uppercase tracking-wider">Actions</th> */}
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {items.map((item, index) => (
-                                                    <tr key={index} className={index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
-                                                        <td className="px-4 py-2 text-sm ">{item.id}</td>
-                                                        <td className="px-4 py-2 text-sm ">{item.quantity}</td>
-                                                        <td className="px-4 py-2 text-base">{item.product}</td>
-                                                        <td className="px-4 py-2 text-base">${item.price.toFixed(2)}</td>
-                                                        <td className="px-4 py-2 text-base">${item.amount.toFixed(2)}</td>
-                                                        {/* <td className="px-4 py-2 text-base">
+                                <div className="overflow-x-auto h-72">
+                                    <table className="min-w-full bg-white border text-black border-gray-200 shadow-md rounded-md">
+                                        <thead className="bg-gray-100 border-b border-gray-200">
+                                            <tr>
+                                                <th className="px-4 py-2 text-left text-base font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                                                <th className="px-4 py-2 text-left text-base font-medium text-gray-500 uppercase tracking-wider">Quantity</th>
+                                                <th className="px-4 py-2 text-left text-base font-medium text-gray-500 uppercase tracking-wider">Product</th>
+                                                <th className="px-4 py-2 text-left text-base font-medium text-gray-500 uppercase tracking-wider">Price</th>
+                                                <th className="px-4 py-2 text-left text-base font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                                                {/* <th className="px-4 py-2 text-left text-base font-medium text-gray-500 uppercase tracking-wider">Actions</th> */}
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {items.map((item, index) => (
+                                                <tr key={index} className={index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
+                                                    <td className="px-4 py-2 text-sm ">{item.id}</td>
+                                                    <td className="px-4 py-2 text-sm ">{item.quantity}</td>
+                                                    <td className="px-4 py-2 text-base">{item.product}</td>
+                                                    <td className="px-4 py-2 text-base">${item.price.toFixed(2)}</td>
+                                                    <td className="px-4 py-2 text-base">${item.amount.toFixed(2)}</td>
+                                                    {/* <td className="px-4 py-2 text-base">
                                                             <button
                                                                 onClick={() => handleVoidItems(item)}
                                                                 className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded"
@@ -803,38 +838,38 @@ const Dashboard = ({ isVisible, onClose }) => {
                                                                 Void
                                                             </button>
                                                         </td> */}
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                    </div>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
 
 
-                                    {isCashInputVisible && (
-                                        <div className="mt-4">
-                                            <div className="flex justify-end mb-4">
-                                                <div className="flex items-center">
-                                                    <label htmlFor="cashTendered" className="text-gray-700 font-bold mr-4 flex-shrink-0">Cash:</label>
-                                                    <input
-                                                        type="number"
-                                                        id="cashTendered"
-                                                        value={cashTendered}
-                                                        onChange={(e) => setCashTendered(e.target.value)}
-                                                        className="border text-black rounded-md px-3 py-2 w-32"
-                                                        required
-                                                        autoFocus
-                                                    />
-                                                </div>
+                                {isCashInputVisible && (
+                                    <div className="mt-4">
+                                        <div className="flex justify-end mb-4">
+                                            <div className="flex items-center">
+                                                <label htmlFor="cashTendered" className="text-gray-700 font-bold mr-4 flex-shrink-0">Cash:</label>
+                                                <input
+                                                    type="number"
+                                                    id="cashTendered"
+                                                    value={cashTendered}
+                                                    onChange={(e) => setCashTendered(e.target.value)}
+                                                    className="border text-black rounded-md px-3 py-2 w-32"
+                                                    required
+                                                    autoFocus
+                                                />
                                             </div>
-                                            {change !== '' && (
-                                                <div className="mt-4 flex justify-end">
-                                                    <h3 className="text-3xl text-gray-700 font-bold">Change: ${change.toFixed(2)}</h3>
-                                                </div>
-                                            )}
                                         </div>
-                                    )}
+                                        {change !== '' && (
+                                            <div className="mt-4 flex justify-end">
+                                                <h3 className="text-3xl text-gray-700 font-bold">Change: ${change.toFixed(2)}</h3>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
 
-                                    {/* <div className="mt-4 flex justify-between">
+                                {/* <div className="mt-4 flex justify-between">
                                             <button
                                                 type="submit"
                                                 className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
@@ -850,12 +885,12 @@ const Dashboard = ({ isVisible, onClose }) => {
                                                 Paid
                                             </button>
                                         </div> */}
-                                </div>
-
                             </div>
 
+                        </div>
 
-                            {/* <div className="mb-4">
+
+                        {/* <div className="mb-4">
                                 <h2 className="text-lg font-semibold text-[#FFFDD0] mt-5">Load Transaction</h2>
                                 <div className="space-y-2">
                                     {JSON.parse(localStorage.getItem('savedTransactions'))?.filter(transaction => transaction.username === getCurrentUsername()).map((transaction, index) => {
@@ -882,40 +917,40 @@ const Dashboard = ({ isVisible, onClose }) => {
                                 </div>
                             </div> */}
 
-                            {showCustomerNameModal && (
-                                <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50">
-                                    <div className="bg-white p-6 rounded-lg shadow-lg">
-                                        <h2 className="text-xl font-semibold mb-4">Enter Customer Name</h2>
-                                        <input
-                                            type="text"
-                                            value={customerName}
-                                            onChange={(e) => setCustomerName(e.target.value)}
-                                            className="border text-black rounded-md px-3 py-2 w-full mb-4"
-                                            placeholder="Customer Name"
-                                            autoFocus
-                                        />
-                                        <button
-                                            onClick={handleSaveTransaction}
-                                            className="bg-blue-500 text-white py-2 px-4 rounded-md"
-                                        >
-                                            Save Transaction
+                        {showCustomerNameModal && (
+                            <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50">
+                                <div className="bg-white p-6 rounded-lg shadow-lg">
+                                    <h2 className="text-xl font-semibold mb-4">Enter Customer Name</h2>
+                                    <input
+                                        type="text"
+                                        value={customerName}
+                                        onChange={(e) => setCustomerName(e.target.value)}
+                                        className="border text-black rounded-md px-3 py-2 w-full mb-4"
+                                        placeholder="Customer Name"
+                                        autoFocus
+                                    />
+                                    <button
+                                        onClick={handleSaveTransaction}
+                                        className="bg-blue-500 text-white py-2 px-4 rounded-md"
+                                    >
+                                        Save Transaction
 
-                                        </button>
-                                        <button
-                                            onClick={() => setShowCustomerNameModal(false)}
-                                            className="bg-red-500 text-white py-2 px-4 rounded-md ml-4"
-                                        >
-                                            Cancel
-                                        </button>
-                                    </div>
+                                    </button>
+                                    <button
+                                        onClick={() => setShowCustomerNameModal(false)}
+                                        className="bg-red-500 text-white py-2 px-4 rounded-md ml-4"
+                                    >
+                                        Cancel
+                                    </button>
                                 </div>
-                            )}
+                            </div>
+                        )}
 
 
 
-                        </div>
                     </div>
-                )}
+                </div>
+
             </div>
 
             {showVoidModal && (
