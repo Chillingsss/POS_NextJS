@@ -52,6 +52,11 @@ const Dashboard = ({ isVisible, onClose }) => {
 
     const [showReportsUserModal, setShowReportsUserModal] = useState(false);
 
+    const [hasUnsavedTransactions, setHasUnsavedTransactions] = useState(false);
+    const [isTransactionLoaded, setIsTransactionLoaded] = useState(false);
+
+    const [canLogout, setCanLogout] = useState(true);
+
     useEffect(() => {
         const storedRole = localStorage.getItem('role');
         setIsAdmin(storedRole === 'admin');
@@ -111,21 +116,8 @@ const Dashboard = ({ isVisible, onClose }) => {
         }
     };
 
-    const handleLogout = () => {
-        setIsLoggedIn(false);
-        setUsername('');
-        setPassword('');
-        setFullname('');
-        setRole('');
-        setIsAdmin(false);
 
-        localStorage.removeItem('name');
-        localStorage.removeItem('role');
-        localStorage.removeItem('currentUsername');
 
-        router.push('/');
-
-    };
 
     const fetchProductDetails = async (barcode) => {
         try {
@@ -200,6 +192,8 @@ const Dashboard = ({ isVisible, onClose }) => {
             setBarcode('');
             setProduct('');
             setPrice('');
+
+            setHasUnsavedTransactions(false);
         } else {
             alert('Quantity must be greater than 0');
         }
@@ -301,6 +295,9 @@ const Dashboard = ({ isVisible, onClose }) => {
         setShowVoidModal(false);
         setAdminPassword('');
         setItemToVoid(null);
+
+        setHasUnsavedTransactions(false); // Reset to false as the transaction is saved
+        setIsTransactionLoaded(false);
         if (quantityRef.current) {
             quantityRef.current.focus();
         }
@@ -377,21 +374,15 @@ const Dashboard = ({ isVisible, onClose }) => {
 
         const username = getCurrentUsername();
         const savedTransactions = JSON.parse(localStorage.getItem('savedTransactions')) || [];
-
-
         const userTransactions = savedTransactions.filter(transaction => transaction.username === username);
-
 
         let newTransactionId;
         if (userTransactions.length === 0) {
-
             newTransactionId = 1;
         } else {
-
             const lastId = Math.max(...userTransactions.map(t => t.id));
             newTransactionId = lastId + 1;
         }
-
 
         const dateTime = new Date().toISOString();
 
@@ -411,8 +402,13 @@ const Dashboard = ({ isVisible, onClose }) => {
         const allLastId = Math.max(...allTransactions.map(t => t.id), 0);
         localStorage.setItem('lastTransactionId', allLastId);
 
+        setHasUnsavedTransactions(false); // Reset to false as the transaction is saved
+        setIsTransactionLoaded(false); // Ensure no transaction is loaded
         resetTransaction();
     };
+
+
+
 
 
 
@@ -438,35 +434,97 @@ const Dashboard = ({ isVisible, onClose }) => {
 
     const handleLoadTransaction = (id) => {
         if (items.length > 0) {
-            // alert("Please complete the current transaction before loading another.");
+            alert("Please complete the current transaction before loading another.");
             return;
         }
 
         const username = getCurrentUsername();
-        console.log("Current Username:", username);
-
         const savedTransactions = JSON.parse(localStorage.getItem('savedTransactions')) || [];
-        console.log("Saved Transactions:", savedTransactions);
-
         const filteredTransactions = savedTransactions.filter(transaction => transaction.username === username);
-        console.log("Filtered Transactions:", filteredTransactions);
 
         const transactionToLoad = filteredTransactions.find(transaction => transaction.id === id);
-        console.log("Transaction to Load:", transactionToLoad);
 
         if (transactionToLoad) {
             setItems(transactionToLoad.items);
             setTotal(transactionToLoad.total);
+            setIsTransactionLoaded(true);
 
             const updatedTransactions = savedTransactions.filter(transaction => transaction.id !== id);
             localStorage.setItem('savedTransactions', JSON.stringify(updatedTransactions));
 
             setSelectedTransactionIndex(null);
+            setHasUnsavedTransactions(false); // Ensure no unsaved transactions
         } else {
             alert("No matching transaction found or it's not yours.");
         }
     };
 
+
+
+
+
+    useEffect(() => {
+        console.log("Checking logout conditions...");
+        if (hasUnsavedTransactions || isTransactionLoaded) {
+            console.log("Unsaved transactions or loaded transactions present.");
+            setCanLogout(false);
+        } else {
+            console.log("No transactions present.");
+            setCanLogout(true);
+        }
+    }, [hasUnsavedTransactions, isTransactionLoaded]);
+
+
+
+    useEffect(() => {
+        const savedTransactions = JSON.parse(localStorage.getItem('savedTransactions')) || [];
+
+        const username = getCurrentUsername();
+        const userTransactions = savedTransactions.filter(transaction => transaction.username === username);
+
+        if (userTransactions.length > 0) {
+            setCanLogout(false);
+        } else {
+            setCanLogout(true);
+        }
+    }, []);
+
+
+
+
+    const handleLogout = () => {
+        const savedTransactions = JSON.parse(localStorage.getItem('savedTransactions')) || [];
+        const username = getCurrentUsername();
+
+        const userTransactions = savedTransactions.filter(transaction => transaction.username === username);
+
+        if (userTransactions.length > 0) {
+            // If there are transactions, prevent logout
+            alert("Please save or clear all transactions before logging out.");
+            return;
+        }
+
+
+        console.log("Can Logout Check:", canLogout);
+        if (!canLogout) {
+            alert("Please save or clear all transactions before logging out.");
+            return;
+        }
+
+        // Proceed with logout
+        setIsLoggedIn(false);
+        setUsername('');
+        setPassword('');
+        setFullname('');
+        setRole('');
+        setIsAdmin(false);
+
+        localStorage.removeItem('name');
+        localStorage.removeItem('role');
+        localStorage.removeItem('currentUsername');
+
+        router.push('/');
+    };
 
 
 
@@ -483,9 +541,10 @@ const Dashboard = ({ isVisible, onClose }) => {
     const resetTransaction = () => {
         setItems([]);
         setTotal(0);
-        setCashTendered('');
-        setChange('');
+        setHasUnsavedTransactions(false); // Reset flag correctly
+        setIsTransactionLoaded(false); // Reset flag correctly
     };
+
 
 
     const handlePaidTransaction = () => {

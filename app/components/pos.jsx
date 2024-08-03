@@ -52,6 +52,11 @@ const Dashboard = ({ isVisible, onClose }) => {
 
     const [showReportsUserModal, setShowReportsUserModal] = useState(false);
 
+
+    const [hasUnsavedTransactions, setHasUnsavedTransactions] = useState(false);
+    const [isTransactionLoaded, setIsTransactionLoaded] = useState(false);
+
+
     useEffect(() => {
         const storedRole = localStorage.getItem('role');
         setIsAdmin(storedRole === 'admin');
@@ -111,19 +116,24 @@ const Dashboard = ({ isVisible, onClose }) => {
     //     }
     // };
 
-    const handleLogout = () => {
-        setIsLoggedIn(false);
-        setUsername('');
-        setPassword('');
-        setFullname('');
-        setRole('');
-        setIsAdmin(false);
+    // const handleLogout = () => {
+    //     if (hasUnsavedTransactions || isTransactionLoaded) {
+    //         alert("Please save or clear all transactions before logging out.");
+    //         return;
+    //     }
 
-        localStorage.removeItem('name');
-        localStorage.removeItem('role');
-        localStorage.removeItem('currentUsername');
+    //     setIsLoggedIn(false);
+    //     setUsername('');
+    //     setPassword('');
+    //     setFullname('');
+    //     setRole('');
+    //     setIsAdmin(false);
 
-    };
+    //     localStorage.removeItem('name');
+    //     localStorage.removeItem('role');
+    //     localStorage.removeItem('currentUsername');
+    // };
+
 
     const fetchProductDetails = async (barcode) => {
         try {
@@ -378,8 +388,10 @@ const Dashboard = ({ isVisible, onClose }) => {
         localStorage.setItem('savedTransactions', JSON.stringify(savedTransactions));
         localStorage.setItem('lastTransactionId', newTransactionId);
 
+        setHasUnsavedTransactions(false);
         resetTransaction();
     };
+
 
 
     // const handleLoadTransaction = (transactionId) => {
@@ -408,20 +420,15 @@ const Dashboard = ({ isVisible, onClose }) => {
         }
 
         const username = getCurrentUsername();
-        console.log("Current Username:", username);
-
         const savedTransactions = JSON.parse(localStorage.getItem('savedTransactions')) || [];
-        console.log("Saved Transactions:", savedTransactions);
-
         const filteredTransactions = savedTransactions.filter(transaction => transaction.username === username);
-        console.log("Filtered Transactions:", filteredTransactions);
 
         const transactionToLoad = filteredTransactions.find(transaction => transaction.id === id);
-        console.log("Transaction to Load:", transactionToLoad);
 
         if (transactionToLoad) {
             setItems(transactionToLoad.items);
             setTotal(transactionToLoad.total);
+            setIsTransactionLoaded(true);
 
             const updatedTransactions = savedTransactions.filter(transaction => transaction.id !== id);
             localStorage.setItem('savedTransactions', JSON.stringify(updatedTransactions));
@@ -438,7 +445,6 @@ const Dashboard = ({ isVisible, onClose }) => {
 
 
 
-
     // const handleRemoveTransaction = (index) => {
     //     const updatedTransactions = savedTransactions.filter((_, i) => i !== index);
     //     localStorage.setItem('savedTransactions', JSON.stringify(updatedTransactions));
@@ -448,9 +454,10 @@ const Dashboard = ({ isVisible, onClose }) => {
     const resetTransaction = () => {
         setItems([]);
         setTotal(0);
-        setCashTendered('');
-        setChange('');
+        setHasUnsavedTransactions(false);
+        setIsTransactionLoaded(false);
     };
+
 
 
     const handlePaidTransaction = () => {
