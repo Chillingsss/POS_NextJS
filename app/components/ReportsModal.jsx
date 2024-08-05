@@ -11,12 +11,12 @@ const ReportsModal = ({ isVisible, onClose }) => {
 
     useEffect(() => {
         if (isVisible) {
-     
+
             axios.post('http://localhost/pos/sales.php', new URLSearchParams({
                 operation: 'getZReport'
             }))
                 .then(response => {
-                    
+
                     if (Array.isArray(response.data)) {
                         setTransactions(response.data);
                     } else {

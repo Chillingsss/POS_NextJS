@@ -704,6 +704,86 @@ const Dashboard = ({ isVisible, onClose }) => {
         };
     }, []);
 
+
+    const [transactions, setTransactions] = useState([]);
+    const [filterName, setFilterName] = useState('');
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
+
+    useEffect(() => {
+
+
+        axios.post('http://localhost/pos/sales.php', new URLSearchParams({
+            operation: 'getZReport'
+        }))
+            .then(response => {
+
+                if (Array.isArray(response.data)) {
+                    setTransactions(response.data);
+                } else {
+                    console.error('Unexpected data format:', response.data);
+                }
+            })
+            .catch(error => console.error('Error fetching report data:', error));
+
+    }, []);
+
+    const parseDate = (dateString) => {
+        return new Date(dateString);
+    };
+
+    const filteredTransactions = transactions.filter(transaction => {
+        const transactionDate = parseDate(transaction.sale_date);
+        const start = startDate ? new Date(startDate) : null;
+        const end = endDate ? new Date(new Date(endDate).setHours(23, 59, 59, 999)) : null;
+
+        return (
+            (!filterName || transaction.user_username === filterName) &&
+            (!start || transactionDate >= start) &&
+            (!end || transactionDate <= end)
+        );
+    });
+
+    const getTotalForTransactions = (transactionsList) => {
+        return transactionsList.reduce((total, transaction) => total + transaction.sale_totalAmount, 0);
+    };
+
+    const getTodayTotal = () => {
+        const today = new Date();
+        const startOfToday = new Date(today.setHours(0, 0, 0, 0));
+        const endOfToday = new Date(today.setHours(23, 59, 59, 999));
+
+        const todayTransactions = transactions.filter(transaction => {
+            const transactionDate = parseDate(transaction.sale_date);
+            return transactionDate >= startOfToday && transactionDate <= endOfToday;
+        });
+
+        return getTotalForTransactions(todayTransactions);
+    };
+
+    useEffect(() => {
+        const handleKeyDown = (event) => {
+            if (event.key === 'Escape') {
+                onClose();
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [onClose]);
+
+
+    const transactionsEndRef = useRef(null);
+
+    useEffect(() => {
+        if (transactionsEndRef.current) {
+            transactionsEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
+        }
+    }, [filteredTransactions]);
+
     return (
         <>
             <KeycapActions
@@ -747,197 +827,134 @@ const Dashboard = ({ isVisible, onClose }) => {
 
 
             <div className="flex flex-col md:flex-row min-h-screen">
-                {/* {!isLoggedIn && (
-                    <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-75 z-50">
-                        <div className="bg-white p-10 rounded-lg shadow-lg w-full max-w-lg">
-                            <h1 className="text-3xl font-bold mb-6 text-center">Login</h1>
-                            <form onSubmit={handleLogin}>
-                                <div className="mb-6">
-                                    <label htmlFor="username" className="block text-gray-700 mb-2 text-lg">Username</label>
-                                    <select
-                                        value={username}
-                                        onChange={(e) => {
-                                            setUsername(e.target.value);
-                                            handleLogin(e.target.value, password);
-                                        }}
-                                        className="border text-black rounded-md px-4 py-3 w-full text-lg"
-                                        id="username"
-                                        required
-                                    >
-                                        <option value="">Select Username</option>
-                                        {usernames.map((user, index) => (
-                                            <option key={index} value={user}>{user}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div className="mb-6">
-                                    <label htmlFor="password" className="block text-gray-700 mb-2 text-lg">Password</label>
-                                    <input
-                                        value={password}
-                                        onChange={(e) => {
-                                            setPassword(e.target.value);
-                                            handleLogin(username, e.target.value);
-                                        }}
-                                        className="border text-black rounded-md px-4 py-3 w-full text-lg"
-                                        id="password"
-                                        type="password"
-                                        required
-                                    />
-                                </div>
-                            </form>
+
+                <div className='flex flex-col md:flex-grow  '>
+                    <div className="bg-gray-900 text-white p-4 shadow-lg w-full md:w-64 md:fixed top-0 left-0 h-full flex flex-col">
+                        <h2 className="text-3xl font-bold mb-6">POS System</h2>
+                        <ul className="space-y-4">
+                            <li className="text-lg font-semibold hover:text-gray-300">Dashboard</li>
+                            <li className="text-lg font-semibold hover:text-gray-300">Sales</li>
+                            <li className="text-lg font-semibold hover:text-gray-300">Inventory</li>
+                            <li className="text-lg font-semibold hover:text-gray-300">Reports</li>
+                        </ul>
+                        <div className="mt-auto">
+                            <button
+                                onClick={handleLogout}
+                                className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md w-full"
+                            >
+                                Logout
+                            </button>
                         </div>
                     </div>
 
-                )} */}
 
 
-                <div className='flex flex-col md:flex-grow  '>
-                    {/* <div className="bg-gray-900 text-white p-4 shadow-lg w-full md:w-64 md:fixed top-0 left-0 h-full flex flex-col">
-                            <h2 className="text-3xl font-bold mb-6">POS System</h2>
-                            <ul className="space-y-4">
-                                <li className="text-lg font-semibold hover:text-gray-300">Dashboard</li>
-                                <li className="text-lg font-semibold hover:text-gray-300">Sales</li>
-                                <li className="text-lg font-semibold hover:text-gray-300">Inventory</li>
-                                <li className="text-lg font-semibold hover:text-gray-300">Reports</li>
-                            </ul>
-                            <div className="mt-auto">
-                                <button
-                                    onClick={handleLogout}
-                                    className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md w-full"
-                                >
-                                    Logout
-                                </button>
-                            </div>
-                        </div> */}
-
-
-
-                    <div className="flex-grow bg-[#6F4E37] p-8 ">
-                        <div className="flex justify-between items-center mb-6 md:mt-8">
+                    <div className=" bg-[#6F4E37] p-8 ml-0 md:ml-64 ">
+                        <div className="flex justify-between items-center mb-6 md:mt-0 ">
                             <h2 className="text-3xl font-bold text-[#FFFDD0] ">Coffee Thingy</h2>
 
                             <h2 className="text-3xl font-bold text-[#FFFDD0] ">Welcome, {fullname}</h2>
                         </div>
 
-                        <div className="flex flex-col md:flex-row gap-8 ">
-                            <div className="w-full md:w-1/2 p-4 bg-[#FFFDD0] rounded-lg shadow-md">
-                                <form onSubmit={(e) => e.preventDefault()}>
-                                    <div className="grid grid-cols-1 gap-4">
-                                        <div className="mb-4">
-                                            <label htmlFor="quantity" className="block text-gray-700 font-bold mb-2">Quantity:</label>
-                                            <input
-                                                type="text"
-                                                id="quantity"
-                                                value={quantity}
-                                                onChange={(e) => setQuantity(e.target.value)}
-                                                className="border text-white rounded-md px-3 py-2 w-full bg-[#6F4E37]"
-                                                required
-                                                ref={quantityRef}
-                                                autoFocus
-                                            />
 
-                                        </div>
-                                        <div className="mb-4">
-                                            <label htmlFor="barcode" className="block text-gray-700 font-bold mb-2 ">Barcode:</label>
-                                            <input
-                                                type="text"
-                                                id="barcode"
-                                                value={barcode}
-                                                onChange={(e) => setBarcode(e.target.value)}
-                                                className="border text-white rounded-md px-3 py-2 w-full bg-[#6F4E37]"
-                                                required
-                                                ref={barcodeRef}
-                                            />
-                                        </div>
+                        {/* <div className="w-full md:w-1/2 p-4 bg-[#FFFDD0] rounded-lg shadow-md">
+                            <form onSubmit={(e) => e.preventDefault()}>
+                                <div className="grid grid-cols-1 gap-4">
+                                    <div className="mb-4">
+                                        <label htmlFor="quantity" className="block text-gray-700 font-bold mb-2">Quantity:</label>
+                                        <input
+                                            type="text"
+                                            id="quantity"
+                                            value={quantity}
+                                            onChange={(e) => setQuantity(e.target.value)}
+                                            className="border text-white rounded-md px-3 py-2 w-full bg-[#6F4E37]"
+                                            required
+                                            ref={quantityRef}
+                                            autoFocus
+                                        />
+
                                     </div>
-                                </form>
-                            </div>
+                                    <div className="mb-4">
+                                        <label htmlFor="barcode" className="block text-gray-700 font-bold mb-2 ">Barcode:</label>
+                                        <input
+                                            type="text"
+                                            id="barcode"
+                                            value={barcode}
+                                            onChange={(e) => setBarcode(e.target.value)}
+                                            className="border text-white rounded-md px-3 py-2 w-full bg-[#6F4E37]"
+                                            required
+                                            ref={barcodeRef}
+                                        />
+                                    </div>
+                                </div>
+                            </form>
+                        </div> */}
 
-                            <div className="w-full md:w-1/2 p-4 bg-[#FFFDD0] rounded-lg shadow-md">
+                        <div className="flex justify-end h-[600px]">
+                            <div className="w-full md:w-1/2 p-4 bg-[#FFFDD0] rounded-lg shadow-md flex flex-col">
                                 <div className="mb-4 flex justify-between">
                                     <h3 className="text-2xl text-gray-700 font-bold">Current Sale</h3>
-                                    <h3 className="text-5xl text-gray-700 font-bold">Total: ₱{total.toFixed(2)}</h3>
+                                    {/* <h3 className="text-5xl text-gray-700 font-bold">Total: ₱{total.toFixed(2)}</h3> */}
                                 </div>
-                                <div className="overflow-x-auto h-72">
-                                    <table className="min-w-full border text-black border-gray-200 shadow-md rounded-md bg-[#6F4E37]">
-                                        <thead className="bg-[#6F4E37] border-b border-gray-200">
-                                            <tr>
-                                                <th className="px-4 py-2 text-left text-base font-medium text-white uppercase tracking-wider">ID</th>
-                                                <th className="px-4 py-2 text-left text-base font-medium text-white uppercase tracking-wider">Quantity</th>
-                                                <th className="px-4 py-2 text-left text-base font-medium text-white uppercase tracking-wider">Product</th>
-                                                <th className="px-4 py-2 text-left text-base font-medium text-white uppercase tracking-wider">Price</th>
-                                                <th className="px-4 py-2 text-left text-base font-medium text-white uppercase tracking-wider">Amount</th>
-                                                {/* <th className="px-4 py-2 text-left text-base font-medium text-gray-500 uppercase tracking-wider">Actions</th> */}
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {items.map((item, index) => (
-                                                <tr key={index} className={index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
-                                                    <td className="px-4 py-2 text-lg ">{item.id}</td>
-                                                    <td className="px-4 py-2 text-lg ">{item.quantity}</td>
-                                                    <td className="px-4 py-2 text-lg">{item.product}</td>
-                                                    <td className="px-4 py-2 text-lg">${item.price.toFixed(2)}</td>
-                                                    <td className="px-4 py-2 text-lg">${item.amount.toFixed(2)}</td>
-                                                    {/* <td className="px-4 py-2 text-base">
-                                                            <button
-                                                                onClick={() => handleVoidItems(item)}
-                                                                className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded"
-                                                            >
-                                                                Void
-                                                            </button>
-                                                        </td> */}
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
+                                <div className="mb-4 space-y-4">
+                                    <input
+                                        type="text"
+                                        placeholder="Filter by name"
+                                        value={filterName}
+                                        onChange={e => setFilterName(e.target.value)}
+                                        className="border border-gray-300 rounded p-2 w-full"
+                                        autoFocus
+                                    />
+                                    {/* <input
+                            type="date"
+                            placeholder="Start date"
+                            value={startDate}
+                            onChange={e => setStartDate(e.target.value)}
+                            className="border border-gray-300 rounded p-2 w-full"
+                        />
+                        <input
+                            type="date"
+                            placeholder="End date"
+                            value={endDate}
+                            onChange={e => setEndDate(e.target.value)}
+                            className="border border-gray-300 rounded p-2 w-full"
+                        /> */}
                                 </div>
-
-
-
-
-                                {isCashInputVisible && (
-                                    <div className="mt-4">
-                                        <div className="flex justify-end mb-4">
-                                            <div className="flex items-center">
-                                                <label htmlFor="cashTendered" className="text-gray-700 font-bold mr-4 flex-shrink-0">Cash:</label>
-                                                <input
-                                                    type="number"
-                                                    id="cashTendered"
-                                                    value={cashTendered}
-                                                    onChange={(e) => setCashTendered(e.target.value)}
-                                                    className="border text-black rounded-md px-3 py-2 w-32"
-                                                    required
-                                                    autoFocus
-                                                />
+                                <div className="mb-4">
+                                    <h3 className="text-xl font-bold">Total of Today's Transactions: ₱{getTodayTotal().toFixed(2)}</h3>
+                                    <h3 className="text-xl font-bold">Total for Filtered Transactions: ₱{getTotalForTransactions(filteredTransactions).toFixed(2)}</h3>
+                                </div>
+                                <div className="flex-1 overflow-y-auto">
+                                    {filteredTransactions.length === 0 ? (
+                                        <p>No transactions found.</p>
+                                    ) : (
+                                        filteredTransactions.map((transaction, index) => (
+                                            <div key={index} className="border p-4 rounded report-item mb-4">
+                                                <p><strong>User:</strong> {transaction.user_username}</p>
+                                                <p><strong>Date/Time:</strong> {transaction.sale_date}</p>
+                                                <p><strong>Total:</strong> ₱{transaction.sale_totalAmount.toFixed(2)}</p>
+                                                <p><strong>Cash Tendered:</strong> ₱{transaction.sale_cashTendered.toFixed(2)}</p>
+                                                <p><strong>Change:</strong> ₱{transaction.sale_change.toFixed(2)}</p>
+                                                <div>
+                                                    <strong>Items:</strong>
+                                                    <ul className="list-disc pl-5">
+                                                        {transaction.items.map((item, idx) => (
+                                                            <li key={idx}>{item.sale_item_quantity} x {item.product_name} - ₱{item.sale_item_price.toFixed(2)}</li>
+                                                        ))}
+                                                    </ul>
+                                                </div>
                                             </div>
-                                        </div>
-                                        {change !== '' && (
-                                            <div className="mt-4 flex justify-end">
-                                                <h3 className="text-3xl text-gray-700 font-bold">Change: ₱{change.toFixed(2)}</h3>
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
-
-                                {/* <div className="mt-4 flex justify-between">
-                                            <button
-                                                type="submit"
-                                                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
-                                                onClick={handleSaveTransaction}
-                                            >
-                                                Save
-                                            </button>
-                                            <button
-                                                type="submit"
-                                                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
-                                                onClick={handlePaidTransaction}
-                                            >
-                                                Paid
-                                            </button>
-                                        </div> */}
+                                        ))
+                                    )}
+                                    <div ref={transactionsEndRef} /> {/* This element ensures scrolling to bottom */}
+                                </div>
                             </div>
-
                         </div>
+
+
+
+
+
                         <div className="w-[49%] p-4 bg-[#FFFDD0] rounded-lg shadow-md mt-5">
                             <div className="max-h-[270px] overflow-y-auto"> {/* Set max height and enable vertical scrolling */}
                                 <table className="min-w-full divide-y divide-gray-200">

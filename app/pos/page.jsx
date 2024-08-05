@@ -998,53 +998,10 @@ const Dashboard = ({ isVisible, onClose }) => {
             />
 
 
-            <div className="flex flex-col md:flex-row min-h-screen">
-                {/* {!isLoggedIn && (
-                    <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-75 z-50">
-                        <div className="bg-white p-10 rounded-lg shadow-lg w-full max-w-lg">
-                            <h1 className="text-3xl font-bold mb-6 text-center">Login</h1>
-                            <form onSubmit={handleLogin}>
-                                <div className="mb-6">
-                                    <label htmlFor="username" className="block text-gray-700 mb-2 text-lg">Username</label>
-                                    <select
-                                        value={username}
-                                        onChange={(e) => {
-                                            setUsername(e.target.value);
-                                            handleLogin(e.target.value, password);
-                                        }}
-                                        className="border text-black rounded-md px-4 py-3 w-full text-lg"
-                                        id="username"
-                                        required
-                                    >
-                                        <option value="">Select Username</option>
-                                        {usernames.map((user, index) => (
-                                            <option key={index} value={user}>{user}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div className="mb-6">
-                                    <label htmlFor="password" className="block text-gray-700 mb-2 text-lg">Password</label>
-                                    <input
-                                        value={password}
-                                        onChange={(e) => {
-                                            setPassword(e.target.value);
-                                            handleLogin(username, e.target.value);
-                                        }}
-                                        className="border text-black rounded-md px-4 py-3 w-full text-lg"
-                                        id="password"
-                                        type="password"
-                                        required
-                                    />
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-
-                )} */}
+            <div className="flex min-h-screen">
 
 
-                <div className='flex flex-col md:flex-grow  '>
-                    {/* <div className="bg-gray-900 text-white p-4 shadow-lg w-full md:w-64 md:fixed top-0 left-0 h-full flex flex-col">
+                {/* <div className="bg-gray-900 text-white p-4 shadow-lg w-full md:w-64 md:fixed top-0 left-0 h-full flex flex-col">
                             <h2 className="text-3xl font-bold mb-6">POS System</h2>
                             <ul className="space-y-4">
                                 <li className="text-lg font-semibold hover:text-gray-300">Dashboard</li>
@@ -1064,167 +1021,154 @@ const Dashboard = ({ isVisible, onClose }) => {
 
 
 
-                    <div className="flex-grow bg-[#6F4E37] p-8 ">
-                        <div className="flex justify-between items-center mb-6 md:mt-8">
-                            <h2 className="text-3xl font-bold text-[#FFFDD0]">Coffee Thingy</h2>
-                            <div>
-                                <h2 className="text-3xl font-bold text-[#FFFDD0]">Welcome, {fullname}</h2>
-                                <h2 className="text-xl font-semibold text-[#FFFDD0]">Remaining Balance: ${beginningBalance.toFixed(2)}</h2>
-                            </div>
+                <div className="flex-grow bg-[#6F4E37] p-4 ">
+                    <div className="flex justify-between items-center mb-2 md:mt-0">
+                        <h2 className="text-3xl font-bold text-[#FFFDD0]">Coffee Thingy</h2>
+                        <div>
+                            <h2 className="text-3xl font-bold text-[#FFFDD0]">Welcome, {fullname}</h2>
+                            <h2 className="text-xl font-semibold text-[#FFFDD0]">Remaining Balance: ${beginningBalance.toFixed(2)}</h2>
+                        </div>
+                    </div>
+
+
+                    <div className='flex md:flex-row gap-4'>
+                        <div className="w-full md:w-1/2 p-4 bg-[#FFFDD0] rounded-lg shadow-md">
+                            <form onSubmit={(e) => e.preventDefault()}>
+                                <div className="grid grid-cols-1 gap-4">
+                                    <div className="mb-4">
+                                        <label htmlFor="quantity" className="block text-gray-700 font-bold mb-2">Quantity:</label>
+                                        <input
+                                            type="text"
+                                            id="quantity"
+                                            value={quantity}
+                                            onChange={(e) => setQuantity(e.target.value)}
+                                            className="border text-white rounded-md px-3 py-2 w-full bg-[#6F4E37]"
+                                            required
+                                            ref={quantityRef}
+                                            autoFocus
+                                        />
+                                    </div>
+                                    <div className="mb-4">
+                                        <label htmlFor="barcode" className="block text-gray-700 font-bold mb-2 ">Barcode:</label>
+                                        <input
+                                            type="text"
+                                            id="barcode"
+                                            value={barcode}
+                                            onChange={(e) => setBarcode(e.target.value)}
+                                            className="border text-white rounded-md px-3 py-2 w-full bg-[#6F4E37]"
+                                            required
+                                            ref={barcodeRef}
+                                        />
+                                    </div>
+                                </div>
+                            </form>
                         </div>
 
-
-                        <div className="flex flex-col md:flex-row gap-8 ">
-                            <div className="w-full md:w-1/2 p-4 bg-[#FFFDD0] rounded-lg shadow-md">
-                                <form onSubmit={(e) => e.preventDefault()}>
-                                    <div className="grid grid-cols-1 gap-4">
-                                        <div className="mb-4">
-                                            <label htmlFor="quantity" className="block text-gray-700 font-bold mb-2">Quantity:</label>
-                                            <input
-                                                type="text"
-                                                id="quantity"
-                                                value={quantity}
-                                                onChange={(e) => setQuantity(e.target.value)}
-                                                className="border text-white rounded-md px-3 py-2 w-full bg-[#6F4E37]"
-                                                required
-                                                ref={quantityRef}
-                                                autoFocus
-                                            />
-                                        </div>
-                                        <div className="mb-4">
-                                            <label htmlFor="barcode" className="block text-gray-700 font-bold mb-2 ">Barcode:</label>
-                                            <input
-                                                type="text"
-                                                id="barcode"
-                                                value={barcode}
-                                                onChange={(e) => setBarcode(e.target.value)}
-                                                className="border text-white rounded-md px-3 py-2 w-full bg-[#6F4E37]"
-                                                required
-                                                ref={barcodeRef}
-                                            />
-                                        </div>
-                                    </div>
-                                </form>
+                        <div className="w-full md:w-1/2 p-4 bg-[#FFFDD0] rounded-lg shadow-md">
+                            <div className="mb-4 flex justify-between">
+                                <h3 className="text-2xl text-gray-700 font-bold">Current Sale</h3>
+                                <h3 className="text-5xl text-gray-700 font-bold">Total: ₱{total.toFixed(2)}</h3>
                             </div>
-
-                            <div className="w-full md:w-1/2 p-4 bg-[#FFFDD0] rounded-lg shadow-md">
-                                <div className="mb-4 flex justify-between">
-                                    <h3 className="text-2xl text-gray-700 font-bold">Current Sale</h3>
-                                    <h3 className="text-5xl text-gray-700 font-bold">Total: ₱{total.toFixed(2)}</h3>
-                                </div>
-                                <div className="overflow-x-auto h-72">
-                                    <table className="min-w-full border text-black border-gray-200 shadow-md rounded-md bg-[#6F4E37]">
-                                        <thead className="bg-[#6F4E37] border-b border-gray-200">
-                                            <tr>
-                                                <th className="px-4 py-2 text-left text-base font-medium text-white uppercase tracking-wider">ID</th>
-                                                <th className="px-4 py-2 text-left text-base font-medium text-white uppercase tracking-wider">Quantity</th>
-                                                <th className="px-4 py-2 text-left text-base font-medium text-white uppercase tracking-wider">Product</th>
-                                                <th className="px-4 py-2 text-left text-base font-medium text-white uppercase tracking-wider">Price</th>
-                                                <th className="px-4 py-2 text-left text-base font-medium text-white uppercase tracking-wider">Amount</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {items.length > 0 ? (
-                                                items.map((item, index) => (
-                                                    <tr
-                                                        key={index}
-                                                        className={`cursor-pointer ${selectedItemIndex === index ? 'bg-yellow-200' : index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}`}
-                                                        onClick={() => setSelectedItemIndex(index)}
-                                                        ref={el => (itemsRef.current[index] = el)}
-                                                    >
-                                                        <td className="px-4 py-2 text-lg">{item.prod_id}</td>
-                                                        <td className="px-4 py-2 text-lg">{item.quantity}</td>
-                                                        <td className="px-4 py-2 text-lg">{item.product}</td>
-                                                        <td className="px-4 py-2 text-lg">${parseFloat(item.price).toFixed(2)}</td>
-                                                        <td className="px-4 py-2 text-lg">${parseFloat(item.amount).toFixed(2)}</td>
-                                                    </tr>
-                                                ))
-                                            ) : (
-                                                <tr>
-                                                    <td colSpan="5" className="px-4 py-2 text-lg text-center">No products available</td>
-                                                </tr>
-                                            )}
-                                        </tbody>
-                                    </table>
-                                </div>
-
-
-
-
-
-
-                                {isCashInputVisible && (
-                                    <div className="mt-4">
-                                        <div className="flex justify-end mb-4">
-                                            <div className="flex items-center">
-                                                <label htmlFor="cashTendered" className="text-gray-700 font-bold mr-4 flex-shrink-0">Cash:</label>
-                                                <input
-                                                    type="number"
-                                                    id="cashTendered"
-                                                    value={cashTendered}
-                                                    onChange={(e) => setCashTendered(e.target.value)}
-                                                    className="border text-black rounded-md px-3 py-2 w-32"
-                                                    required
-                                                    autoFocus
-                                                />
-                                            </div>
-                                        </div>
-                                        {change !== '' && (
-                                            <div className="mt-4 flex justify-end">
-                                                <h3 className="text-3xl text-gray-700 font-bold">Change: ₱{change.toFixed(2)}</h3>
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
-
-                                {/* <div className="mt-4 flex justify-between">
-                                            <button
-                                                type="submit"
-                                                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
-                                                onClick={handleSaveTransaction}
-                                            >
-                                                Save
-                                            </button>
-                                            <button
-                                                type="submit"
-                                                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
-                                                onClick={handlePaidTransaction}
-                                            >
-                                                Paid
-                                            </button>
-                                        </div> */}
-                            </div>
-
-                        </div>
-                        <div className="w-[49%] p-4 bg-[#FFFDD0] rounded-lg shadow-md mt-5">
-                            <div className="max-h-[270px] overflow-y-auto"> {/* Set max height and enable vertical scrolling */}
-                                <table className="min-w-full divide-y divide-gray-200">
-                                    <thead className="bg-[#6F4E37]">
+                            <div className="overflow-x-auto h-72">
+                                <table className="min-w-full border text-black border-gray-200 shadow-md rounded-md bg-[#6F4E37]">
+                                    <thead className="bg-[#6F4E37] border-b border-gray-200">
                                         <tr>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Barcode</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Product Name</th>
+                                            <th className="px-4 py-2 text-left text-base font-medium text-white uppercase tracking-wider">ID</th>
+                                            <th className="px-4 py-2 text-left text-base font-medium text-white uppercase tracking-wider">Quantity</th>
+                                            <th className="px-4 py-2 text-left text-base font-medium text-white uppercase tracking-wider">Product</th>
+                                            <th className="px-4 py-2 text-left text-base font-medium text-white uppercase tracking-wider">Price</th>
+                                            <th className="px-4 py-2 text-left text-base font-medium text-white uppercase tracking-wider">Amount</th>
                                         </tr>
                                     </thead>
-                                    <tbody className="bg-white divide-y divide-gray-200">
-                                        {products.length === 0 ? (
-                                            <tr>
-                                                <td colSpan="2" className="px-6 py-4 text-center text-gray-500">No products available</td>
-                                            </tr>
-                                        ) : (
-                                            products.map((product, index) => (
-                                                <tr key={index}>
-                                                    <td className="px-6 py-4 whitespace-nowrap">{product.barcode}</td>
-                                                    <td className="px-6 py-4 whitespace-nowrap">{product.p_name}</td>
+                                    <tbody>
+                                        {items.length > 0 ? (
+                                            items.map((item, index) => (
+                                                <tr
+                                                    key={index}
+                                                    className={`cursor-pointer ${selectedItemIndex === index ? 'bg-yellow-200' : index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}`}
+                                                    onClick={() => setSelectedItemIndex(index)}
+                                                    ref={el => (itemsRef.current[index] = el)}
+                                                >
+                                                    <td className="px-4 py-2 text-lg">{item.prod_id}</td>
+                                                    <td className="px-4 py-2 text-lg">{item.quantity}</td>
+                                                    <td className="px-4 py-2 text-lg">{item.product}</td>
+                                                    <td className="px-4 py-2 text-lg">${parseFloat(item.price).toFixed(2)}</td>
+                                                    <td className="px-4 py-2 text-lg">${parseFloat(item.amount).toFixed(2)}</td>
                                                 </tr>
                                             ))
+                                        ) : (
+                                            <tr>
+                                                <td colSpan="5" className="px-4 py-2 text-lg text-center">No products available</td>
+                                            </tr>
                                         )}
                                     </tbody>
                                 </table>
                             </div>
+
+
+
+
+
+
+                            {isCashInputVisible && (
+                                <div className="mt-2">
+                                    <div className="flex justify-end ">
+                                        <div className="flex items-center">
+                                            <label htmlFor="cashTendered" className="text-gray-700 font-bold mr-4 flex-shrink-0">Cash:</label>
+                                            <input
+                                                type="number"
+                                                id="cashTendered"
+                                                value={cashTendered}
+                                                onChange={(e) => setCashTendered(e.target.value)}
+                                                className="border text-black rounded-md px-3 py-2 w-32"
+                                                required
+                                                autoFocus
+                                            />
+                                        </div>
+                                    </div>
+                                    {change !== '' && (
+                                        <div className="mt-4 flex justify-end">
+                                            <h3 className="text-3xl text-gray-700 font-bold">Change: ₱{change.toFixed(2)}</h3>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+
                         </div>
+                    </div>
 
 
-                        {/* <div className="mb-4">
+
+                    <div className="w-[49%] p-4 bg-[#FFFDD0] rounded-lg shadow-md mt-5">
+                        <div className="max-h-[270px] overflow-y-auto"> {/* Set max height and enable vertical scrolling */}
+                            <table className="min-w-full divide-y divide-gray-200">
+                                <thead className="bg-[#6F4E37]">
+                                    <tr>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Barcode</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Product Name</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="bg-white divide-y divide-gray-200">
+                                    {products.length === 0 ? (
+                                        <tr>
+                                            <td colSpan="2" className="px-6 py-4 text-center text-gray-500">No products available</td>
+                                        </tr>
+                                    ) : (
+                                        products.map((product, index) => (
+                                            <tr key={index}>
+                                                <td className="px-6 py-4 whitespace-nowrap">{product.barcode}</td>
+                                                <td className="px-6 py-4 whitespace-nowrap">{product.p_name}</td>
+                                            </tr>
+                                        ))
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+
+                    {/* <div className="mb-4">
                                 <h2 className="text-lg font-semibold text-[#FFFDD0] mt-5">Load Transaction</h2>
                                 <div className="space-y-2">
                                     {JSON.parse(localStorage.getItem('savedTransactions'))?.filter(transaction => transaction.username === getCurrentUsername()).map((transaction, index) => {
@@ -1251,41 +1195,41 @@ const Dashboard = ({ isVisible, onClose }) => {
                                 </div>
                             </div> */}
 
-                        {showCustomerNameModal && (
-                            <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50">
-                                <div className="bg-white p-6 rounded-lg shadow-lg">
-                                    <h2 className="text-xl font-semibold mb-4">Enter Customer Name</h2>
-                                    <input
-                                        type="text"
-                                        value={customerName}
-                                        onChange={(e) => setCustomerName(e.target.value)}
-                                        className="border text-black rounded-md px-3 py-2 w-full mb-4"
-                                        placeholder="Customer Name"
-                                        autoFocus
-                                    />
-                                    <button
-                                        onClick={handleSaveTransaction}
-                                        className="bg-blue-500 text-white py-2 px-4 rounded-md"
-                                    >
-                                        Save Transaction
+                    {showCustomerNameModal && (
+                        <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50">
+                            <div className="bg-white p-6 rounded-lg shadow-lg">
+                                <h2 className="text-xl font-semibold mb-4">Enter Customer Name</h2>
+                                <input
+                                    type="text"
+                                    value={customerName}
+                                    onChange={(e) => setCustomerName(e.target.value)}
+                                    className="border text-black rounded-md px-3 py-2 w-full mb-4"
+                                    placeholder="Customer Name"
+                                    autoFocus
+                                />
+                                <button
+                                    onClick={handleSaveTransaction}
+                                    className="bg-blue-500 text-white py-2 px-4 rounded-md"
+                                >
+                                    Save Transaction
 
-                                    </button>
-                                    <button
-                                        onClick={() => setShowCustomerNameModal(false)}
-                                        className="bg-red-500 text-white py-2 px-4 rounded-md ml-4"
-                                    >
-                                        Cancel
-                                    </button>
-                                </div>
+                                </button>
+                                <button
+                                    onClick={() => setShowCustomerNameModal(false)}
+                                    className="bg-red-500 text-white py-2 px-4 rounded-md ml-4"
+                                >
+                                    Cancel
+                                </button>
                             </div>
-                        )}
+                        </div>
+                    )}
 
 
 
-                    </div>
                 </div>
 
-            </div>
+
+            </div >
 
             {showVoidModal && (
                 <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-75 z-50">
@@ -1307,7 +1251,8 @@ const Dashboard = ({ isVisible, onClose }) => {
 
                     </div>
                 </div>
-            )}
+            )
+            }
         </>
     );
 };

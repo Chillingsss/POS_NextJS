@@ -16,7 +16,6 @@ const ReportsUserModal = ({ isVisible, onClose }) => {
 
     useEffect(() => {
         if (isVisible) {
-            // setLoading(false);
             setError(null);
             fetchShiftReport(userId);
         }
@@ -37,7 +36,7 @@ const ReportsUserModal = ({ isVisible, onClose }) => {
 
             const data = response.data;
             if (Array.isArray(data)) {
-                setTransactions(data);
+                setTransactions(data.sort((a, b) => new Date(b.sale_date) - new Date(a.sale_date)));
             } else {
                 setError('Error fetching transactions');
             }
@@ -126,9 +125,6 @@ const ReportsUserModal = ({ isVisible, onClose }) => {
         printWindow.focus();
         printWindow.print();
     };
-
-    // if (loading) return <p>Loading...</p>;
-    // if (error) return <p>Error: {error}</p>;
 
     return (
         isVisible && (
