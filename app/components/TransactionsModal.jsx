@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 const TransactionsModal = ({ isVisible, onClose, onLoadTransaction }) => {
     const [transactions, setTransactions] = useState([]);
+    const [selectedIndex, setSelectedIndex] = useState(null);
+    const [focused, setFocused] = useState(false);
+    const transactionsRef = useRef([]);
     const [inputId, setInputId] = useState('');
-
-    // Function for getting the current username
     const getCurrentUsername = () => {
         return localStorage.getItem('currentUsername');
     };
@@ -25,8 +26,7 @@ const TransactionsModal = ({ isVisible, onClose, onLoadTransaction }) => {
             const transactionToLoad = transactions.find(transaction => transaction.id === parseInt(inputId));
             if (transactionToLoad) {
                 onLoadTransaction(transactionToLoad.id);
-                setTransactions([]); // Clear the transactions table in the modal
-                setInputId(''); // Clear the input field
+                setSelectedIndex(null); // Clear selected index
                 onClose(); // Close the modal
             }
         }
@@ -36,6 +36,20 @@ const TransactionsModal = ({ isVisible, onClose, onLoadTransaction }) => {
         const handleKeyDown = (event) => {
             if (event.key === 'Escape') {
                 onClose();
+            } else if (event.key === 'Enter' && selectedIndex !== null) {
+                const transactionToLoad = transactions[selectedIndex];
+                if (transactionToLoad) {
+                    onLoadTransaction(transactionToLoad.id);
+                    setSelectedIndex(null);
+                    onClose();
+                }
+            } else if (event.key === 'ArrowDown') {
+                setSelectedIndex(prevIndex => (prevIndex === null ? 0 : Math.min(prevIndex + 1, transactions.length - 1)));
+            } else if (event.key === 'ArrowUp') {
+                setSelectedIndex(prevIndex => (prevIndex === null ? 0 : Math.max(prevIndex - 1, 0)));
+            } else if (event.ctrlKey && event.key === 'F12') {
+                event.preventDefault();
+                onClose(); // You can implement modal open logic here
             }
         };
 
@@ -44,7 +58,13 @@ const TransactionsModal = ({ isVisible, onClose, onLoadTransaction }) => {
         return () => {
             window.removeEventListener('keydown', handleKeyDown);
         };
-    }, [onClose]);
+    }, [transactions, selectedIndex, onClose, onLoadTransaction]);
+
+    useEffect(() => {
+        if (focused && transactionsRef.current[selectedIndex]) {
+            transactionsRef.current[selectedIndex].focus();
+        }
+    }, [focused, selectedIndex]);
 
     return (
         isVisible && (
@@ -53,16 +73,6 @@ const TransactionsModal = ({ isVisible, onClose, onLoadTransaction }) => {
                     <div className="flex justify-between items-center mb-4">
                         <h2 className="text-2xl font-bold">Saved Transactions</h2>
                         <button onClick={onClose} className="text-red-500 font-bold">Close</button>
-                    </div>
-                    <div className="mb-4 space-y-4">
-                        <input
-                            type="number"
-                            placeholder="Enter Transaction ID"
-                            value={inputId}
-                            onChange={(e) => setInputId(e.target.value)}
-                            className="border border-gray-300 rounded p-2 w-full"
-                            autoFocus
-                        />
                     </div>
                     <div className="mb-4">
                         <h3 className="text-xl font-bold mb-2">Transactions List</h3>
@@ -82,7 +92,16 @@ const TransactionsModal = ({ isVisible, onClose, onLoadTransaction }) => {
                                     </thead>
                                     <tbody>
                                         {transactions.map((transaction, index) => (
-                                            <tr key={index}>
+                                            <tr
+                                                key={index}
+                                                ref={el => transactionsRef.current[index] = el}
+                                                className={`cursor-pointer ${index === selectedIndex ? 'bg-gray-200' : ''}`}
+                                                onClick={() => {
+                                                    setSelectedIndex(index);
+                                                    setFocused(true);
+                                                }}
+                                                onMouseEnter={() => setSelectedIndex(index)}
+                                            >
                                                 <td className="py-2 px-4 border-b">{transaction.id}</td>
                                                 <td className="py-2 px-4 border-b">{transaction.username}</td>
                                                 <td className="py-2 px-4 border-b">{transaction.dateTime}</td>

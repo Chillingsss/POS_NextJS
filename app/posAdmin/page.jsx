@@ -3,8 +3,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
-import { Toaster, toast } from 'sonner';
-
 
 
 import KeycapActions from '../components/KeycapActions';
@@ -12,7 +10,6 @@ import ReportsModal from '../components/ReportsModal';
 import TransactionsModal from '../components/TransactionsModal';
 import VoidModal from '../components/VoidModal';
 import ReportsUserModal from '../components/ReportsUserModal';
-
 
 
 const Dashboard = ({ isVisible, onClose }) => {
@@ -71,6 +68,8 @@ const Dashboard = ({ isVisible, onClose }) => {
 
     const router = useRouter();
 
+
+
     useEffect(() => {
         const storedName = localStorage.getItem('name');
         if (storedName) {
@@ -89,78 +88,20 @@ const Dashboard = ({ isVisible, onClose }) => {
 
 
 
-
-
-
-    // const fetchProductDetails = async (barcode) => {
-    //     try {
-    //         const response = await axios.get('http://localhost/listing/sampleData.php', {
-    //             params: { type: 'products' }
-    //         });
-    //         const data = response.data;
-    //         const productDetail = data.find(product => product.barcode === barcode);
-    //         if (productDetail) {
-    //             setProduct(productDetail.p_name);
-    //             setPrice(productDetail.price);
-    //             addItem(productDetail.p_name, productDetail.price);
-    //         } else {
-    //             setProduct('');
-    //             setPrice('');
-    //         }
-    //     } catch (error) {
-    //         console.error('Error fetching product data:', error);
-    //         alert('Error fetching product data.');
-    //     }
-    // };
-
-    const [products, setProducts] = useState([]);
-
-    useEffect(() => {
-        fetchAllProducts();
-    }, []);
-
-    useEffect(() => {
-        if (quantity && barcode) {
-            const product = products.find(prod => prod.prod_id === parseInt(barcode));
-            if (product) {
-                addItem(product.prod_name, product.prod_price);
-            }
-        }
-    }, [quantity, barcode]);
-
-    const fetchAllProducts = async () => {
+    const fetchProductDetails = async (barcode) => {
         try {
-            const response = await axios.post('http://localhost/pos/products.php', new URLSearchParams({
-                operation: 'getAllProduct',
-            }), {
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
+            const response = await axios.get('http://localhost/listing/sampleData.php', {
+                params: { type: 'products' }
             });
-
-            console.log('Response:', response);
-            console.log('Fetched data:', response.data);
-
-            // Ensure response.data is in the correct format
-            let data;
-            if (typeof response.data === 'string') {
-                // Attempt to parse response data if it's a string
-                try {
-                    data = JSON.parse(response.data);
-                } catch (error) {
-                    throw new Error('Error parsing JSON data: ' + error.message);
-                }
+            const data = response.data;
+            const productDetail = data.find(product => product.barcode === barcode);
+            if (productDetail) {
+                setProduct(productDetail.p_name);
+                setPrice(productDetail.price);
+                addItem(productDetail.p_name, productDetail.price);
             } else {
-                // Use response.data directly if it's already an object/array
-                data = response.data;
-            }
-
-            // Validate that data is an array
-            if (Array.isArray(data)) {
-                console.log('Parsed data:', data);
-                setProducts(data);
-            } else {
-                throw new Error('Fetched data is not an array');
+                setProduct('');
+                setPrice('');
             }
         } catch (error) {
             console.error('Error fetching product data:', error);
@@ -168,32 +109,34 @@ const Dashboard = ({ isVisible, onClose }) => {
         }
     };
 
+    const [products, setProducts] = useState([]);
 
+    useEffect(() => {
+        fetchAllProducts();
+    }, []);
 
-
+    const fetchAllProducts = async () => {
+        try {
+            const response = await axios.get('http://localhost/listing/sampleData.php', {
+                params: { type: 'products' }
+            });
+            setProducts(response.data);
+        } catch (error) {
+            console.error('Error fetching product data:', error);
+            alert('Error fetching product data.');
+        }
+    };
 
     const addItem = (productName, productPrice) => {
         const parsedQuantity = parseFloat(quantity);
         const parsedPrice = parseFloat(productPrice);
 
-        // Find the product based on the name
-        const product = products.find(p => p.prod_name === productName);
-
-        if (!product) {
-            toast.error('Product not found');
-            return;
-        }
-
-        const productId = product.prod_id;
-
         if (parsedQuantity > 0 && productName && productPrice) {
             setItems(prevItems => {
-                const existingItemIndex = prevItems.findIndex(item => item.prod_id === productId);
-
-                let updatedItems;
+                const existingItemIndex = prevItems.findIndex(item => item.product === productName);
 
                 if (existingItemIndex !== -1) {
-                    updatedItems = prevItems.map((item, index) =>
+                    const updatedItems = prevItems.map((item, index) =>
                         index === existingItemIndex
                             ? {
                                 ...item,
@@ -202,115 +145,47 @@ const Dashboard = ({ isVisible, onClose }) => {
                             }
                             : item
                     );
+
+                    const newTotal = updatedItems.reduce((acc, item) => acc + item.amount, 0);
+                    setTotal(newTotal);
+
+                    if (quantityRef.current) {
+                        quantityRef.current.focus();
+                    }
+
+                    return updatedItems;
                 } else {
                     const newItem = {
-                        prod_id: productId, // Use the prod_id from fetched data
+                        id: prevItems.length + 1, // Incremental ID
                         quantity: parsedQuantity,
                         product: productName,
                         price: parsedPrice,
                         amount: parsedQuantity * parsedPrice
                     };
-                    updatedItems = [...prevItems, newItem];
+                    const newItems = [...prevItems, newItem];
+
+                    const newTotal = newItems.reduce((acc, item) => acc + item.amount, 0);
+                    setTotal(newTotal);
+
+                    if (quantityRef.current) {
+                        quantityRef.current.focus();
+                    }
+
+                    return newItems;
                 }
-
-                const newTotal = updatedItems.reduce((acc, item) => acc + item.amount, 0);
-                setTotal(newTotal);
-
-                if (quantityRef.current) {
-                    quantityRef.current.focus();
-                }
-
-                return updatedItems;
             });
 
             setQuantity('1');
             setBarcode('');
-            if (quantityRef.current) {
-                quantityRef.current.focus();
-            }
+            setProduct('');
+            setPrice('');
+
+            setHasUnsavedTransactions(false);
         } else {
-            toast.error('Quantity must be greater than 0');
+            alert('Quantity must be greater than 0');
         }
     };
 
-
-
-
-
-
-
-
-    const [remainingBalance, setRemainingBalance] = useState(0);
-
-
-    useEffect(() => {
-        // Fetch the remaining balance when the component mounts
-        const fetchRemainingBalance = async () => {
-            try {
-                const response = await axios.post('http://localhost/pos/balance.php',
-                    new URLSearchParams({
-                        operation: 'getBeginningBalance'
-                    }),
-                    { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
-                );
-                console.log('Response data:', response.data); // Log response data
-                if (response.data && response.data.beginning_balance !== undefined) {
-                    setRemainingBalance(response.data.beginning_balance || 0);
-                } else {
-                    console.error('Unexpected response format:', response.data);
-                }
-            } catch (error) {
-                console.error('Error fetching beginning balance:', error);
-            }
-        };
-
-
-
-
-        fetchRemainingBalance();
-    }, []);
-
-
-    const [beginningBalance, setBeginningBalance] = useState(0);
-
-    useEffect(() => {
-        const fetchBeginningBalance = async () => {
-            try {
-                const response = await axios.post('http://localhost/pos/balance.php', new URLSearchParams({
-                    operation: 'getBeginningBalance'
-                }), {
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
-                });
-                if (response.data) {
-                    setBeginningBalance(response.data.beginning_balance || 0);
-                }
-            } catch (error) {
-                console.error('Error fetching beginning balance:', error);
-            }
-        };
-
-        fetchBeginningBalance();
-    }, []);
-
-
-
-
-    const updateBeginningBalance = async (newBalance) => {
-        try {
-            const response = await axios.post('http://localhost/pos/balance.php', new URLSearchParams({
-                operation: 'updateBeginningBalance',
-                json: JSON.stringify({ amount: newBalance })
-            }), {
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
-            });
-            if (response.data) {
-                // Handle success (e.g., show a success message or refresh balance)
-                console.log('Beginning balance updated successfully.');
-            }
-        } catch (error) {
-            console.error('Error updating beginning balance:', error);
-        }
-    };
 
 
 
@@ -318,14 +193,19 @@ const Dashboard = ({ isVisible, onClose }) => {
 
     const calculateChange = (cashAmount) => {
         const tendered = parseFloat(cashAmount);
-        const totalAmount = total; // Assuming `total` is the amount to be paid
-        if (tendered < totalAmount) {
+        if (tendered < total) {
+
             setChange('');
         } else {
-            const change = tendered - totalAmount;
-            setChange(change);
+            setChange(tendered - total);
         }
     };
+
+    useEffect(() => {
+        if (barcode) {
+            fetchProductDetails(barcode);
+        }
+    }, [barcode]);
 
     useEffect(() => {
         if (cashTendered) {
@@ -333,37 +213,83 @@ const Dashboard = ({ isVisible, onClose }) => {
         }
     }, [cashTendered]);
 
-
-
-
-
-
     const handleVoidItems = (itemsToVoid, voidAll = false) => {
-        console.log("handleVoidItems called with:", itemsToVoid, voidAll);
-
-        if (voidAll) {
-            // Set all items to void
-            setItemToVoid(items); // Assuming items is the full list of items
-            setSelectedItemIndex(null); // No specific item selected
-        } else {
-            // Set specific item to void
-            const index = items.findIndex(item => item === itemsToVoid);
-            if (index !== -1) {
-                setItemToVoid([itemsToVoid]);
-                setSelectedItemIndex(index);
+        if (role === 'admin') {
+            if (voidAll) {
+                setItemToVoid(itemsToVoid);
             } else {
-                console.log("Item not found in list:", itemsToVoid);
+                setItemToVoid(itemsToVoid);
             }
+            setShowVoidModal(true);
+        } else {
+
+            if (voidAll) {
+                setItemToVoid(itemsToVoid);
+            } else {
+                setItemToVoid(itemsToVoid);
+            }
+            setShowVoidModal(true);
         }
-        setShowVoidModal(true);
     };
 
 
+    // const handleVoidSubmit = async (e) => {
+    //     e.preventDefault();
+
+    //     try {
+    //         const usersResponse = await axios.get('http://localhost/listing/sampleData.php?type=users');
+    //         const users = usersResponse.data;
+
+    //         const isValid = users.some(user => user.role === 'admin' && user.password === adminPassword);
+
+    //         if (isValid) {
+    //             if (Array.isArray(itemToVoid)) {
+
+    //                 setItems(prevItems => prevItems.filter(item => !itemToVoid.includes(item)));
+    //                 const totalToSubtract = itemToVoid.reduce((sum, item) => sum + item.amount, 0);
+    //                 setTotal(prevTotal => prevTotal - totalToSubtract);
+    //             } else if (itemToVoid) {
+
+    //                 setItems(prevItems => prevItems.filter(item => item !== itemToVoid));
+    //                 setTotal(prevTotal => prevTotal - itemToVoid.amount);
+    //             }
+
+    //             setShowVoidModal(false);
+    //             setAdminPassword('');
+    //             setItemToVoid(null);
+    //         } else {
+    //             alert('Invalid admin password.');
+    //         }
+    //     } catch (error) {
+    //         console.error('Error fetching user data or verifying password:', error);
+    //         alert('Error verifying admin password.');
+    //     }
+    // };
 
 
+    const handleVoidSubmit = () => {
+        if (Array.isArray(itemToVoid)) {
+            setItems(prevItems => prevItems.filter(item => !itemToVoid.includes(item)));
+            const totalToSubtract = itemToVoid.reduce((sum, item) => sum + item.amount, 0);
+            setTotal(prevTotal => prevTotal - totalToSubtract);
 
 
+        } else if (itemToVoid) {
+            setItems(prevItems => prevItems.filter(item => item !== itemToVoid));
+            setTotal(prevTotal => prevTotal - itemToVoid.amount);
+        }
 
+        setShowVoidModal(false);
+        setAdminPassword('');
+        setItemToVoid(null);
+
+        setHasUnsavedTransactions(false);
+        setIsTransactionLoaded(false);
+        if (quantityRef.current) {
+            quantityRef.current.focus();
+        }
+
+    };
 
     const handleAdminPasswordChange = async (e) => {
         const password = e.target.value;
@@ -371,94 +297,24 @@ const Dashboard = ({ isVisible, onClose }) => {
 
         if (password.length > 0) {
             try {
-                const response = await axios.post('http://localhost/pos/user.php', new URLSearchParams({
+                const response = await axios.post('http://localhost/your_endpoint.php', {
                     operation: 'verifyAdminPassword',
-                    json: JSON.stringify({ password: password })
-                }), {
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
+                    password: password
                 });
 
                 const result = response.data;
-                console.log('Server response:', result); // Log the full response
-
                 if (result.status === 1) {
-                    handleVoidSubmit(); // Or any other function you need to call
+                    // Call handleVoidSubmit if password is valid
+                    handleVoidSubmit();
                 } else {
-                    console.log('Invalid admin password:', result.message);
-                    // Optionally reset the password input
-                    // setAdminPassword('');
+                    alert('Invalid admin password.');
                 }
             } catch (error) {
                 console.error('Error verifying admin password:', error);
-                toast.error('Error verifying admin password.');
+                alert('Error verifying admin password.');
             }
         }
     };
-
-
-    const handleVoidSubmit = () => {
-        console.log("itemToVoid:", itemToVoid);
-        console.log("selectedItemIndex:", selectedItemIndex);
-
-        if (itemToVoid && itemToVoid.length > 0) {
-            if (itemToVoid.length === items.length) {
-                // Void all items
-                console.log("Voiding all items.");
-                setItems([]);
-            } else if (selectedItemIndex !== null && selectedItemIndex < items.length) {
-                // Void selected item
-                console.log("Voiding selected item:", items[selectedItemIndex]);
-                setItems(prevItems => prevItems.filter((_, index) => index !== selectedItemIndex));
-            } else {
-                console.log("No item selected or index out of range.");
-            }
-
-            // Close the modal and reset the state
-            setShowVoidModal(false);
-            setAdminPassword('');
-            setItemToVoid(null);
-            setSelectedItemIndex(null); // Reset selected item index
-            setHasUnsavedTransactions(false);
-            setIsTransactionLoaded(false);
-
-            // Focus on the quantity input if available
-            if (quantityRef.current) {
-                quantityRef.current.focus();
-            }
-        } else {
-            console.log("itemToVoid is null or empty.");
-        }
-    };
-
-
-
-
-
-
-
-
-    useEffect(() => {
-        const handleKeyPress = (event) => {
-            if (event.key === 'V') {
-                if (items.length > 0) {
-                    handleVoidItems(items, true);
-                }
-            }
-        };
-
-        window.addEventListener('keydown', handleKeyPress);
-
-        // Clean up the event listener on component unmount
-        return () => {
-            window.removeEventListener('keydown', handleKeyPress);
-        };
-    }, [items]);
-
-
-
-
 
 
 
@@ -567,7 +423,7 @@ const Dashboard = ({ isVisible, onClose }) => {
 
     const handleLoadTransaction = (id) => {
         if (items.length > 0) {
-            // alert("Please complete the current transaction before loading another.");
+            alert("Please complete the current transaction before loading another.");
             return;
         }
 
@@ -632,7 +488,7 @@ const Dashboard = ({ isVisible, onClose }) => {
         const userTransactions = savedTransactions.filter(transaction => transaction.username === username);
 
         if (userTransactions.length > 0) {
-
+            // If there are transactions, prevent logout
             alert("Please save or clear all transactions before logging out.");
             return;
         }
@@ -644,10 +500,6 @@ const Dashboard = ({ isVisible, onClose }) => {
             return;
         }
 
-        if (items.length > 0) {
-            alert("Please save or clear all transactions before logging out.");
-            return;
-        }
         // Proceed with logout
         setIsLoggedIn(false);
         setUsername('');
@@ -684,7 +536,7 @@ const Dashboard = ({ isVisible, onClose }) => {
 
 
 
-    const handlePaidTransaction = async () => {
+    const handlePaidTransaction = () => {
         const cash = parseFloat(cashTendered);
 
         if (isNaN(cash) || cash < total) {
@@ -692,88 +544,25 @@ const Dashboard = ({ isVisible, onClose }) => {
             return;
         }
 
+
         const fullName = localStorage.getItem('name');
         const username = localStorage.getItem('currentUsername');
-        const userId = localStorage.getItem('user_id'); // Make sure userId is set in localStorage
-
-        if (!userId) {
-            alert('User ID is not available.');
-            return;
-        }
-
-        // Check if there are items in the table
-        if (items.length === 0) {
-            alert('No items in the transaction. Please add items before proceeding.');
-            return;
-        }
-
-        const transactionData = {
-            master: {
-                userId: parseInt(userId),
-                cashTendered: cash,
-                change,
-                totalAmount: total
-            },
-            detail: items.map(item => ({
-                productId: item.prod_id,
-                quantity: item.quantity,
-                price: item.price
-            }))
-        };
-
-        // Check if the remaining balance is sufficient to give change
-        if (change > beginningBalance) {
-            alert('Insufficient balance to give change. Please ensure enough balance is available.');
-            return;
-        }
-
-        try {
-            const response = await axios.post('http://localhost/pos/sales.php', new URLSearchParams({
-                json: JSON.stringify(transactionData),
-                operation: 'saveTransaction'
-            }), {
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
-            });
-
-            const result = response.data;
-            if (result.success) {
-                // alert('Transaction saved successfully.');
-
-                const newBalance = beginningBalance - change + cash;
-                await updateBeginningBalance(newBalance);
-                setBeginningBalance(newBalance);
 
 
-                setCashTendered('');
-                setChange('');
-                resetTransaction();
-                toggleCashInputVisibility();
+        const currentDateTime = new Date().toLocaleString();
 
-                if (quantityRef.current) {
-                    quantityRef.current.focus();
-                }
-            } else {
-                alert(`Failed to save transaction. Error: ${result.error}`);
-            }
-        } catch (error) {
-            console.error('Error saving transaction:', error);
-            alert('Error saving transaction.');
+
+        const paidTransactions = JSON.parse(localStorage.getItem('paidTransactions')) || [];
+        const newTransaction = { items, total, cashTendered: cash, change, fullName, username, dateTime: currentDateTime };
+        paidTransactions.push(newTransaction);
+        localStorage.setItem('paidTransactions', JSON.stringify(paidTransactions));
+        resetTransaction();
+        toggleCashInputVisibility();
+
+        if (quantityRef.current) {
+            quantityRef.current.focus();
         }
     };
-
-
-
-    const calculateTotal = () => {
-        const newTotal = items.reduce((acc, item) => acc + item.price * item.quantity, 0);
-        setTotal(newTotal);
-    };
-
-    // Update total when items change
-    useEffect(() => {
-        calculateTotal();
-    }, [items]);
-
-
 
 
 
@@ -868,19 +657,19 @@ const Dashboard = ({ isVisible, onClose }) => {
     }, []);
 
 
-    // useEffect(() => {
-    //     const handleKeyDown = (event) => {
-    //         if (event.ctrlKey && event.key === 'F8') {
-    //             setIsVoidModalVisible(true);
-    //         }
-    //     };
+    useEffect(() => {
+        const handleKeyDown = (event) => {
+            if (event.ctrlKey && event.key === 'F8') {
+                setIsVoidModalVisible(true);
+            }
+        };
 
-    //     window.addEventListener('keydown', handleKeyDown);
+        window.addEventListener('keydown', handleKeyDown);
 
-    //     return () => {
-    //         window.removeEventListener('keydown', handleKeyDown);
-    //     };
-    // }, []);
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown);
+        };
+    }, []);
 
     useEffect(() => {
         const handleKeyDown = (event) => {
@@ -914,47 +703,6 @@ const Dashboard = ({ isVisible, onClose }) => {
             window.removeEventListener('keydown', handleKeyDown);
         };
     }, []);
-
-
-    const [selectedItemIndex, setSelectedItemIndex] = useState(null);
-    const itemsRef = useRef([]);
-
-    useEffect(() => {
-        const handleKeyDown = (event) => {
-            if (event.ctrlKey && event.key === 'F9') {
-                event.preventDefault();
-                setSelectedItemIndex(0); // Start selection at the first item
-            } else if (event.key === 'ArrowDown') {
-                event.preventDefault();
-                setSelectedItemIndex(prevIndex => {
-                    if (prevIndex !== null && prevIndex < items.length - 1) {
-                        return prevIndex + 1;
-                    }
-                    return prevIndex;
-                });
-            } else if (event.key === 'ArrowUp') {
-                event.preventDefault();
-                setSelectedItemIndex(prevIndex => {
-                    if (prevIndex !== null && prevIndex > 0) {
-                        return prevIndex - 1;
-                    }
-                    return prevIndex;
-                });
-            } else if (event.key === 'Enter') {
-                if (selectedItemIndex !== null) {
-                    handleVoidItems(items[selectedItemIndex]); // Pass the selected item
-                    setShowVoidModal(true);
-                }
-            } else if (event.key === 'Escape') {
-                setSelectedItemIndex(null); // Deselect item
-            }
-        };
-
-        document.addEventListener('keydown', handleKeyDown);
-        return () => document.removeEventListener('keydown', handleKeyDown);
-    }, [selectedItemIndex, items]);
-
-
 
     return (
         <>
@@ -1066,13 +814,10 @@ const Dashboard = ({ isVisible, onClose }) => {
 
                     <div className="flex-grow bg-[#6F4E37] p-8 ">
                         <div className="flex justify-between items-center mb-6 md:mt-8">
-                            <h2 className="text-3xl font-bold text-[#FFFDD0]">Coffee Thingy</h2>
-                            <div>
-                                <h2 className="text-3xl font-bold text-[#FFFDD0]">Welcome, {fullname}</h2>
-                                <h2 className="text-xl font-semibold text-[#FFFDD0]">Remaining Balance: ${beginningBalance.toFixed(2)}</h2>
-                            </div>
-                        </div>
+                            <h2 className="text-3xl font-bold text-[#FFFDD0] ">Coffee Thingy</h2>
 
+                            <h2 className="text-3xl font-bold text-[#FFFDD0] ">Welcome, {fullname}</h2>
+                        </div>
 
                         <div className="flex flex-col md:flex-row gap-8 ">
                             <div className="w-full md:w-1/2 p-4 bg-[#FFFDD0] rounded-lg shadow-md">
@@ -1090,6 +835,7 @@ const Dashboard = ({ isVisible, onClose }) => {
                                                 ref={quantityRef}
                                                 autoFocus
                                             />
+
                                         </div>
                                         <div className="mb-4">
                                             <label htmlFor="barcode" className="block text-gray-700 font-bold mb-2 ">Barcode:</label>
@@ -1121,34 +867,30 @@ const Dashboard = ({ isVisible, onClose }) => {
                                                 <th className="px-4 py-2 text-left text-base font-medium text-white uppercase tracking-wider">Product</th>
                                                 <th className="px-4 py-2 text-left text-base font-medium text-white uppercase tracking-wider">Price</th>
                                                 <th className="px-4 py-2 text-left text-base font-medium text-white uppercase tracking-wider">Amount</th>
+                                                {/* <th className="px-4 py-2 text-left text-base font-medium text-gray-500 uppercase tracking-wider">Actions</th> */}
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {items.length > 0 ? (
-                                                items.map((item, index) => (
-                                                    <tr
-                                                        key={index}
-                                                        className={`cursor-pointer ${selectedItemIndex === index ? 'bg-yellow-200' : index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}`}
-                                                        onClick={() => setSelectedItemIndex(index)}
-                                                        ref={el => (itemsRef.current[index] = el)}
-                                                    >
-                                                        <td className="px-4 py-2 text-lg">{item.prod_id}</td>
-                                                        <td className="px-4 py-2 text-lg">{item.quantity}</td>
-                                                        <td className="px-4 py-2 text-lg">{item.product}</td>
-                                                        <td className="px-4 py-2 text-lg">${parseFloat(item.price).toFixed(2)}</td>
-                                                        <td className="px-4 py-2 text-lg">${parseFloat(item.amount).toFixed(2)}</td>
-                                                    </tr>
-                                                ))
-                                            ) : (
-                                                <tr>
-                                                    <td colSpan="5" className="px-4 py-2 text-lg text-center">No products available</td>
+                                            {items.map((item, index) => (
+                                                <tr key={index} className={index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
+                                                    <td className="px-4 py-2 text-lg ">{item.id}</td>
+                                                    <td className="px-4 py-2 text-lg ">{item.quantity}</td>
+                                                    <td className="px-4 py-2 text-lg">{item.product}</td>
+                                                    <td className="px-4 py-2 text-lg">${item.price.toFixed(2)}</td>
+                                                    <td className="px-4 py-2 text-lg">${item.amount.toFixed(2)}</td>
+                                                    {/* <td className="px-4 py-2 text-base">
+                                                            <button
+                                                                onClick={() => handleVoidItems(item)}
+                                                                className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded"
+                                                            >
+                                                                Void
+                                                            </button>
+                                                        </td> */}
                                                 </tr>
-                                            )}
+                                            ))}
                                         </tbody>
                                     </table>
                                 </div>
-
-
 
 
 
@@ -1291,7 +1033,7 @@ const Dashboard = ({ isVisible, onClose }) => {
                 <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-75 z-50">
                     <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-sm">
                         <h2 className="text-xl font-bold mb-4">Void Item</h2>
-                        <p className="mb-4">Are you sure you want to void this item?</p>
+                        <p className="mb-4">Enter the admin password to void the item.</p>
                         <div className="mb-4">
                             <label htmlFor="adminPassword" className="block text-gray-700 mb-2">Admin Password</label>
                             <input
@@ -1304,10 +1046,16 @@ const Dashboard = ({ isVisible, onClose }) => {
                                 autoFocus
                             />
                         </div>
-
+                        <button
+                            onClick={() => setShowVoidModal(false)}
+                            className="bg-gray-300 text-black px-4 py-2 rounded ml-2"
+                        >
+                            Cancel
+                        </button>
                     </div>
                 </div>
             )}
+
         </>
     );
 };

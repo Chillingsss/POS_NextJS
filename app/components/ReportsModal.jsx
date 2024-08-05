@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 
 const ReportsModal = ({ isVisible, onClose }) => {
     const [transactions, setTransactions] = useState([]);
@@ -10,8 +11,19 @@ const ReportsModal = ({ isVisible, onClose }) => {
 
     useEffect(() => {
         if (isVisible) {
-            const paidTransactions = JSON.parse(localStorage.getItem('paidTransactions')) || [];
-            setTransactions(paidTransactions);
+     
+            axios.post('http://localhost/pos/sales.php', new URLSearchParams({
+                operation: 'getZReport'
+            }))
+                .then(response => {
+                    
+                    if (Array.isArray(response.data)) {
+                        setTransactions(response.data);
+                    } else {
+                        console.error('Unexpected data format:', response.data);
+                    }
+                })
+                .catch(error => console.error('Error fetching report data:', error));
         }
     }, [isVisible]);
 
@@ -20,19 +32,19 @@ const ReportsModal = ({ isVisible, onClose }) => {
     };
 
     const filteredTransactions = transactions.filter(transaction => {
-        const transactionDate = parseDate(transaction.dateTime);
+        const transactionDate = parseDate(transaction.sale_date);
         const start = startDate ? new Date(startDate) : null;
         const end = endDate ? new Date(new Date(endDate).setHours(23, 59, 59, 999)) : null;
 
         return (
-            (!filterName || transaction.fullName === filterName) &&
+            (!filterName || transaction.user_username === filterName) &&
             (!start || transactionDate >= start) &&
             (!end || transactionDate <= end)
         );
     });
 
     const getTotalForTransactions = (transactionsList) => {
-        return transactionsList.reduce((total, transaction) => total + transaction.total, 0);
+        return transactionsList.reduce((total, transaction) => total + transaction.sale_totalAmount, 0);
     };
 
     const getTodayTotal = () => {
@@ -41,7 +53,7 @@ const ReportsModal = ({ isVisible, onClose }) => {
         const endOfToday = new Date(today.setHours(23, 59, 59, 999));
 
         const todayTransactions = transactions.filter(transaction => {
-            const transactionDate = parseDate(transaction.dateTime);
+            const transactionDate = parseDate(transaction.sale_date);
             return transactionDate >= startOfToday && transactionDate <= endOfToday;
         });
 
@@ -95,7 +107,7 @@ const ReportsModal = ({ isVisible, onClose }) => {
                 <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-4xl">
                     <div className="flex justify-between items-center mb-4">
                         <h2 className="text-2xl font-bold">Transaction Reports</h2>
-                        {/* <button onClick={onClose} className="text-red-500 font-bold">Close</button> */}
+                        <button onClick={onClose} className="text-red-500 font-bold">Close</button>
                     </div>
                     <div className="mb-4 space-y-4">
                         <input
@@ -131,16 +143,16 @@ const ReportsModal = ({ isVisible, onClose }) => {
                         ) : (
                             transactions.map((transaction, index) => (
                                 <div key={index} className="border p-4 rounded report-item">
-                                    <p><strong>User:</strong> {transaction.fullName} ({transaction.username})</p>
-                                    <p><strong>Date/Time:</strong> {transaction.dateTime}</p>
-                                    <p><strong>Total:</strong> ₱{transaction.total.toFixed(2)}</p>
-                                    <p><strong>Cash Tendered:</strong> ${transaction.cashTendered.toFixed(2)}</p>
-                                    <p><strong>Change:</strong> ₱{transaction.change.toFixed(2)}</p>
+                                    <p><strong>User:</strong> {transaction.user_username}</p>
+                                    <p><strong>Date/Time:</strong> {transaction.sale_date}</p>
+                                    <p><strong>Total:</strong> ₱{transaction.sale_totalAmount.toFixed(2)}</p>
+                                    <p><strong>Cash Tendered:</strong> ₱{transaction.sale_cashTendered.toFixed(2)}</p>
+                                    <p><strong>Change:</strong> ₱{transaction.sale_change.toFixed(2)}</p>
                                     <div>
                                         <strong>Items:</strong>
                                         <ul className="list-disc pl-5">
                                             {transaction.items.map((item, idx) => (
-                                                <li key={idx}>{item.quantity} x {item.product} - ${item.amount.toFixed(2)}</li>
+                                                <li key={idx}>{item.sale_item_quantity} x {item.product_name} - ₱{item.sale_item_price.toFixed(2)}</li>
                                             ))}
                                         </ul>
                                     </div>
@@ -154,16 +166,16 @@ const ReportsModal = ({ isVisible, onClose }) => {
                         ) : (
                             filteredTransactions.map((transaction, index) => (
                                 <div key={index} className="border p-4 rounded report-item">
-                                    <p><strong>User:</strong> {transaction.fullName} ({transaction.username})</p>
-                                    <p><strong>Date/Time:</strong> {transaction.dateTime}</p>
-                                    <p><strong>Total:</strong> ${transaction.total.toFixed(2)}</p>
-                                    <p><strong>Cash Tendered:</strong> ${transaction.cashTendered.toFixed(2)}</p>
-                                    <p><strong>Change:</strong> ${transaction.change.toFixed(2)}</p>
+                                    <p><strong>User:</strong> {transaction.user_username}</p>
+                                    <p><strong>Date/Time:</strong> {transaction.sale_date}</p>
+                                    <p><strong>Total:</strong> ₱{transaction.sale_totalAmount.toFixed(2)}</p>
+                                    <p><strong>Cash Tendered:</strong> ₱{transaction.sale_cashTendered.toFixed(2)}</p>
+                                    <p><strong>Change:</strong> ₱{transaction.sale_change.toFixed(2)}</p>
                                     <div>
                                         <strong>Items:</strong>
                                         <ul className="list-disc pl-5">
                                             {transaction.items.map((item, idx) => (
-                                                <li key={idx}>{item.quantity} x {item.product} - ${item.amount.toFixed(2)}</li>
+                                                <li key={idx}>{item.sale_item_quantity} x {item.product_name} - ₱{item.sale_item_price.toFixed(2)}</li>
                                             ))}
                                         </ul>
                                     </div>

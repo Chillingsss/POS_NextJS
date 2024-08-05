@@ -1,40 +1,69 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 
 const ReportsUserModal = ({ isVisible, onClose }) => {
     const [transactions, setTransactions] = useState([]);
-    const username = localStorage.getItem('currentUsername');
     const [filterName, setFilterName] = useState('');
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    const username = localStorage.getItem('currentUsername');
+    const userId = localStorage.getItem('user_id');
 
     useEffect(() => {
         if (isVisible) {
-            const paidTransactions = JSON.parse(localStorage.getItem('paidTransactions')) || [];
-            const userTransactions = paidTransactions.filter(transaction => transaction.username === username);
-            setTransactions(userTransactions);
+            // setLoading(false);
+            setError(null);
+            fetchShiftReport(userId);
         }
-    }, [isVisible, username]);
+    }, [isVisible, userId]);
 
-    const parseDate = (dateString) => {
-        return new Date(dateString);
+    const fetchShiftReport = async (userId) => {
+        try {
+            setLoading(true);
+
+            const response = await axios.post('http://localhost/pos/sales.php', new URLSearchParams({
+                operation: 'getShiftReport',
+                json: JSON.stringify({ userId })
+            }), {
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                }
+            });
+
+            const data = response.data;
+            if (Array.isArray(data)) {
+                setTransactions(data);
+            } else {
+                setError('Error fetching transactions');
+            }
+        } catch (error) {
+            setError(error.message);
+        } finally {
+            setLoading(false);
+        }
     };
 
+    const parseDate = (dateString) => new Date(dateString);
+
     const filteredTransactions = transactions.filter(transaction => {
-        const transactionDate = parseDate(transaction.dateTime);
+        const transactionDate = parseDate(transaction.sale_date);
         const start = startDate ? new Date(startDate) : null;
         const end = endDate ? new Date(new Date(endDate).setHours(23, 59, 59, 999)) : null;
 
         return (
-            (!filterName || transaction.fullName === filterName) &&
+            (!filterName || transaction.user_username === filterName) &&
             (!start || transactionDate >= start) &&
             (!end || transactionDate <= end)
         );
     });
 
     const getTotalForDateRange = (transactions) => {
-        return transactions.reduce((total, transaction) => total + transaction.total, 0);
+        return transactions.reduce((total, transaction) => total + transaction.sale_totalAmount, 0);
     };
 
     const getTodayTotal = () => {
@@ -43,7 +72,7 @@ const ReportsUserModal = ({ isVisible, onClose }) => {
         const endOfToday = new Date(today.setHours(23, 59, 59, 999));
 
         const todayTransactions = transactions.filter(transaction => {
-            const transactionDate = parseDate(transaction.dateTime);
+            const transactionDate = parseDate(transaction.sale_date);
             return transactionDate >= startOfToday && transactionDate <= endOfToday;
         });
 
@@ -98,6 +127,9 @@ const ReportsUserModal = ({ isVisible, onClose }) => {
         printWindow.print();
     };
 
+    // if (loading) return <p>Loading...</p>;
+    // if (error) return <p>Error: {error}</p>;
+
     return (
         isVisible && (
             <div className="fixed inset-0 flex items-center justify-center bg-gray-500 bg-opacity-75">
@@ -132,16 +164,16 @@ const ReportsUserModal = ({ isVisible, onClose }) => {
                         ) : (
                             filteredTransactions.map((transaction, index) => (
                                 <div key={index} className="border p-4 rounded report-item">
-                                    <p><strong>User:</strong> {transaction.fullName} ({transaction.username})</p>
-                                    <p><strong>Date/Time:</strong> {transaction.dateTime}</p>
-                                    <p><strong>Total:</strong> ₱{transaction.total.toFixed(2)}</p>
-                                    <p><strong>Cash Tendered:</strong> ${transaction.cashTendered.toFixed(2)}</p>
-                                    <p><strong>Change:</strong> ₱{transaction.change.toFixed(2)}</p>
+                                    <p><strong>User:</strong> {transaction.user_username}</p>
+                                    <p><strong>Date/Time:</strong> {transaction.sale_date}</p>
+                                    <p><strong>Total:</strong> ₱{transaction.sale_totalAmount.toFixed(2)}</p>
+                                    <p><strong>Cash Tendered:</strong> ₱{transaction.sale_cashTendered.toFixed(2)}</p>
+                                    <p><strong>Change:</strong> ₱{transaction.sale_change.toFixed(2)}</p>
                                     <div>
                                         <strong>Items:</strong>
                                         <ul className="list-disc pl-5">
                                             {transaction.items.map((item, idx) => (
-                                                <li key={idx}>{item.quantity} x {item.product} - ₱{item.amount.toFixed(2)}</li>
+                                                <li key={idx}>{item.sale_item_quantity} x {item.product_name} - ₱{(item.sale_item_quantity * item.sale_item_price).toFixed(2)}</li>
                                             ))}
                                         </ul>
                                     </div>

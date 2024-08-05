@@ -37,23 +37,23 @@ const KeycapActions = ({
                 return;
             }
 
+            if (event.ctrlKey && event.key === 'F11') {
+                event.preventDefault();
+                handleSaveTransaction();
+                return;
+            }
+
             switch (event.key) {
-                case 'ArrowUp':
-                    if (items.length > 0) {
-                        handleVoidItems(items, true);
-                    }
-                    break;
-                case 'ArrowDown':
-                    handleSaveTransaction();
-                    break;
+                // case 'V':
+                //     if (items.length > 0) {
+                //         handleVoidItems(items, true);
+                //     }
+                //     break;
+
                 case 'ArrowLeft':
                     handlePaidTransaction();
                     break;
-                case 'ArrowRight':
-                    if (items.length === 0) {
-                        handleLoadTransaction(0);
-                    }
-                    break;
+
                 case '`':
                     const transactions = JSON.parse(localStorage.getItem('savedTransactions')) || [];
                     if (transactions.length > 0) {
@@ -68,11 +68,7 @@ const KeycapActions = ({
                         handleLoadTransaction(selectedTransactionIndex);
                     }
                     break;
-                case 'V':
-                    if (items.length > 0) {
-                        handleVoidItems([items[items.length - 1]]);
-                    }
-                    break;
+
                 case 'L':
                     handleLogout();
                     break;

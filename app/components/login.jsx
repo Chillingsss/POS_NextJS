@@ -3,80 +3,67 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
+import { toast } from 'sonner';
+
 
 const Login = () => {
-    const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
-    const [users, setUsers] = useState([]);
-    const [usernames, setUsernames] = useState([]);
-    const [fullname, setFullname] = useState('');
-    const [role, setRole] = useState('');
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [isAdmin, setIsAdmin] = useState(false);
-
     const router = useRouter();
 
     useEffect(() => {
         const storedName = localStorage.getItem('name');
         const storedRole = localStorage.getItem('role');
 
-        if (storedName) setFullname(storedName);
-        if (storedRole) setRole(storedRole);
-
-        if (storedRole === 'admin') setIsAdmin(true);
-
         if (storedName && storedRole) {
-            // Redirect to POS if already logged in
-            router.push('/pos');
-        } else {
-            fetchUsers();
+
+            router.push(storedRole === 'admin' ? '/posAdmin' : '/pos');
         }
-    }, []);
+    }, [router]);
 
-    const fetchUsers = () => {
-        axios.get('http://localhost/listing/sampleData.php', {
-            params: { type: 'users' }
-        })
-            .then(response => {
-                if (Array.isArray(response.data)) {
-                    setUsers(response.data);
-                    const usernames = response.data.map(user => user.username);
-                    setUsernames(usernames);
-                } else {
-                    console.error('Response data is not an array:', response.data);
-                }
-            })
-            .catch(error => console.error('Error fetching users:', error));
-    };
-
-    const handleLogin = (username, password) => {
+    const handleLogin = async () => {
         if (username && password) {
-            const user = users.find(u => u.username === username && u.password === password);
+            try {
+                const response = await axios.post('http://localhost/pos/user.php', new URLSearchParams({
+                    operation: 'loginUser',
+                    json: JSON.stringify({ loginUsername: username, loginPassword: password })
+                }), {
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                });
 
-            if (user) {
-                setIsLoggedIn(true);
-                localStorage.setItem('name', user.fullname);
-                localStorage.setItem('role', user.role);
-                localStorage.setItem('currentUsername', username);
-                setFullname(user.fullname);
-                setRole(user.role);
-                setIsAdmin(user.role === 'admin');
+                const result = response.data;
 
-                // Navigate to the POS page
-                router.push('/pos');
-            } else {
-                // alert('Invalid username or password');
+                if (result.status === 1) {
+                    localStorage.setItem('name', result.data[0].user_fullName);
+                    localStorage.setItem('role', result.data[0].user_level);
+                    localStorage.setItem('currentUsername', username);
+                    localStorage.setItem('user_id', result.data[0].user_id);
+                    setIsLoggedIn(true);
+                    setIsAdmin(result.data[0].user_level === 'admin');
+
+                    toast.success('Login successful');
+                    router.push(result.data[0].user_level === 'admin' ? '/posAdmin' : '/pos');
+                } else {
+                    toast.error("Login failed");
+                }
+            } catch (error) {
+                console.error("Error logging in:", error);
             }
         }
     };
 
+
     useEffect(() => {
         if (username && password) {
-            handleLogin(username, password);
+            handleLogin();
         }
     }, [username, password]);
 
-    // Render the login form only if not logged in
+
     if (isLoggedIn) {
         return null;
     }
@@ -86,21 +73,22 @@ const Login = () => {
             <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-75 z-50">
                 <div className="bg-white p-10 rounded-lg shadow-lg w-full max-w-lg">
                     <h1 className="text-3xl font-bold mb-6 text-center">Login</h1>
-                    <form>
+                    <form
+                        onSubmit={(e) => {
+                            e.preventDefault();
+                            handleLogin();
+                        }}
+                    >
                         <div className="mb-6">
                             <label htmlFor="username" className="block text-gray-700 mb-2 text-lg">Username</label>
-                            <select
+                            <input
                                 value={username}
                                 onChange={(e) => setUsername(e.target.value)}
                                 className="border text-black rounded-md px-4 py-3 w-full text-lg"
                                 id="username"
                                 required
-                            >
-                                <option value="">Select Username</option>
-                                {usernames.map((user, index) => (
-                                    <option key={index} value={user}>{user}</option>
-                                ))}
-                            </select>
+                                autoFocus
+                            />
                         </div>
                         <div className="mb-6">
                             <label htmlFor="password" className="block text-gray-700 mb-2 text-lg">Password</label>
