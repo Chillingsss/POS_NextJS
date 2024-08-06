@@ -47,12 +47,21 @@ const ReportsUserModal = ({ isVisible, onClose }) => {
         }
     };
 
-    const parseDate = (dateString) => new Date(dateString);
+    const parseDate = (dateString) => {
+
+        const parsedDate = new Date(Date.parse(dateString));
+        return isNaN(parsedDate.getTime()) ? null : parsedDate;
+    };
+
 
     const filteredTransactions = transactions.filter(transaction => {
         const transactionDate = parseDate(transaction.sale_date);
-        const start = startDate ? new Date(startDate) : null;
-        const end = endDate ? new Date(new Date(endDate).setHours(23, 59, 59, 999)) : null;
+        const start = startDate ? new Date(startDate + 'T00:00:00') : null;
+        const end = endDate ? new Date(endDate + 'T23:59:59') : null;
+
+        console.log(`Transaction Date: ${transactionDate}`);
+        console.log(`Start Date: ${start}`);
+        console.log(`End Date: ${end}`);
 
         return (
             (!filterName || transaction.user_username === filterName) &&
@@ -61,19 +70,27 @@ const ReportsUserModal = ({ isVisible, onClose }) => {
         );
     });
 
+
     const getTotalForDateRange = (transactions) => {
         return transactions.reduce((total, transaction) => total + transaction.sale_totalAmount, 0);
     };
 
     const getTodayTotal = () => {
         const today = new Date();
-        const startOfToday = new Date(today.setHours(0, 0, 0, 0));
-        const endOfToday = new Date(today.setHours(23, 59, 59, 999));
+        const startOfToday = new Date(today.toDateString());
+        const endOfToday = new Date(today.toDateString());
+        endOfToday.setHours(23, 59, 59, 999);
+
+        console.log("Start of Today:", startOfToday);
+        console.log("End of Today:", endOfToday);
 
         const todayTransactions = transactions.filter(transaction => {
             const transactionDate = parseDate(transaction.sale_date);
+            console.log(`Transaction Date: ${transactionDate}, Transaction Sale Date: ${transaction.sale_date}`);
             return transactionDate >= startOfToday && transactionDate <= endOfToday;
         });
+
+        console.log("Today's Transactions:", todayTransactions);
 
         return getTotalForDateRange(todayTransactions);
     };
@@ -102,22 +119,125 @@ const ReportsUserModal = ({ isVisible, onClose }) => {
             return;
         }
 
-        const printWindow = window.open('', '', 'height=600,width=800');
-        const printContent = contentElement.innerHTML;
+        // Improved date parsing
+        const parseDate = (dateString) => {
+            const parsedDate = new Date(dateString);
+            if (isNaN(parsedDate.getTime())) {
+                console.error(`Invalid date: ${dateString}`);
+                return null;
+            }
+            return parsedDate;
+        };
+
+        // Move filteredTransactions calculation inside printContent
+        const filteredTransactions = transactions.filter(transaction => {
+            const transactionDate = parseDate(transaction.sale_date);
+            const start = startDate ? new Date(startDate + 'T00:00:00') : null;
+            const end = endDate ? new Date(endDate + 'T23:59:59') : null;
+
+            console.log(`Transaction Date: ${transactionDate}`);
+            console.log(`Start Date: ${start}`);
+            console.log(`End Date: ${end}`);
+
+            return (
+                (!filterName || transaction.user_username === filterName) &&
+                (!start || transactionDate >= start) &&
+                (!end || transactionDate <= end)
+            );
+        });
+
+        console.log("Filtered Transactions:", filteredTransactions);
+
+        const getTotalForDateRange = (transactions) => {
+            return transactions.reduce((total, transaction) => total + transaction.sale_totalAmount, 0);
+        };
+
+        const getTodayTotal = () => {
+            const today = new Date();
+            const startOfToday = new Date(today.toDateString());
+            const endOfToday = new Date(today.toDateString());
+            endOfToday.setHours(23, 59, 59, 999);
+
+            console.log("Start of Today:", startOfToday);
+            console.log("End of Today:", endOfToday);
+
+            // Use filteredTransactions for final filtering
+            const todayTransactions = filteredTransactions.filter(transaction => {
+                const transactionDate = parseDate(transaction.sale_date);
+                console.log(`Transaction Date: ${transactionDate}`);
+                return transactionDate >= startOfToday && transactionDate <= endOfToday;
+            });
+
+            console.log("Today's Transactions:", todayTransactions);
+
+            return getTotalForDateRange(todayTransactions);
+        };
+
+        const printDate = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
+
+        const printWindow = window.open('', '', 'height=600,width=300');
+        const contentHtml = contentElement.innerHTML;
+
         printWindow.document.open();
         printWindow.document.write(`
             <html>
                 <head>
                     <title>Print Report</title>
                     <style>
-                        body { font-family: Arial, sans-serif; margin: 20px; }
-                        .report-container { margin-bottom: 20px; }
-                        .report-item { border: 1px solid #ddd; padding: 10px; margin-bottom: 10px; }
-                        .report-item p { margin: 5px 0; }
+                        body {
+                            font-family: Arial, sans-serif;
+                            font-size: 12px;
+                            margin: 0;
+                            padding: 0;
+                        }
+                        .receipt-container {
+                            width: 300px;
+                            margin: 0 auto;
+                            padding: 10px;
+                            border: 1px solid #ddd;
+                            border-radius: 5px;
+                        }
+                        .receipt-header, .receipt-footer {
+                            text-align: center;
+                            margin-bottom: 10px;
+                        }
+                        .receipt-header h2 {
+                            margin: 0;
+                            font-size: 14px;
+                            font-weight: bold;
+                        }
+                        .receipt-header p {
+                            margin: 5px 0;
+                        }
+                        .receipt-item {
+                            border-bottom: 1px solid #ddd;
+                            padding: 5px 0;
+                            display: flex;
+                            justify-content: space-between;
+                            margin-bottom: 5px;
+                        }
+                        .receipt-item:last-child {
+                            border-bottom: none;
+                        }
+                        .receipt-total {
+                            font-size: 14px;
+                            font-weight: bold;
+                            margin-top: 10px;
+                            text-align: center;
+                        }
                     </style>
                 </head>
                 <body>
-                    ${printContent}
+                    <div class="receipt-container">
+                        <div class="receipt-header">
+                            <h2>Print Report</h2>
+                            <p>Date: ${printDate}</p>
+                        </div>
+                        ${contentHtml}
+                        <div class="receipt-total">
+                            <h3 class="text-xl font-bold">Total of Today's Transactions: ₱${getTodayTotal().toFixed(2)}</h3>
+                        </div>
+                    </div>
                 </body>
             </html>
         `);
@@ -125,6 +245,11 @@ const ReportsUserModal = ({ isVisible, onClose }) => {
         printWindow.focus();
         printWindow.print();
     };
+
+
+
+
+
 
     return (
         isVisible && (
@@ -169,7 +294,7 @@ const ReportsUserModal = ({ isVisible, onClose }) => {
                                         <strong>Items:</strong>
                                         <ul className="list-disc pl-5">
                                             {transaction.items.map((item, idx) => (
-                                                <li key={idx}>{item.sale_item_quantity} x {item.product_name} - ₱{(item.sale_item_quantity * item.sale_item_price).toFixed(2)}</li>
+                                                <li key={idx}>{item.product_name} - {item.quantity}</li>
                                             ))}
                                         </ul>
                                     </div>

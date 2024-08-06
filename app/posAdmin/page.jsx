@@ -63,7 +63,12 @@ const Dashboard = ({ isVisible, onClose }) => {
     }, [role]);
 
 
-
+    useEffect(() => {
+        const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+        if (!isLoggedIn) {
+            router.push('/');
+        }
+    }, []);
 
 
     const router = useRouter();
@@ -479,6 +484,9 @@ const Dashboard = ({ isVisible, onClose }) => {
     }, []);
 
 
+    if (isLoggedIn) {
+        return null;
+    }
 
 
     const handleLogout = () => {
@@ -511,6 +519,7 @@ const Dashboard = ({ isVisible, onClose }) => {
         localStorage.removeItem('name');
         localStorage.removeItem('role');
         localStorage.removeItem('currentUsername');
+        localStorage.removeItem('isLoggedIn', 'true');
 
         router.push('/');
     };
@@ -761,19 +770,19 @@ const Dashboard = ({ isVisible, onClose }) => {
         return getTotalForTransactions(todayTransactions);
     };
 
-    useEffect(() => {
-        const handleKeyDown = (event) => {
-            if (event.key === 'Escape') {
-                onClose();
-            }
-        };
+    // useEffect(() => {
+    //     const handleKeyDown = (event) => {
+    //         if (event.key === 'Escape') {
+    //             onClose();
+    //         }
+    //     };
 
-        window.addEventListener('keydown', handleKeyDown);
+    //     window.addEventListener('keydown', handleKeyDown);
 
-        return () => {
-            window.removeEventListener('keydown', handleKeyDown);
-        };
-    }, [onClose]);
+    //     return () => {
+    //         window.removeEventListener('keydown', handleKeyDown);
+    //     };
+    // }, [onClose]);
 
 
     const transactionsEndRef = useRef(null);
@@ -849,7 +858,7 @@ const Dashboard = ({ isVisible, onClose }) => {
 
 
 
-                    <div className=" bg-[#6F4E37] p-8 ml-0 md:ml-64 ">
+                    <div className=" bg-[#6F4E37] p-8 ml-0 md:ml-64 h-screen">
                         <div className="flex justify-between items-center mb-6 md:mt-0 ">
                             <h2 className="text-3xl font-bold text-[#FFFDD0] ">Coffee Thingy</h2>
 
@@ -890,22 +899,51 @@ const Dashboard = ({ isVisible, onClose }) => {
                             </form>
                         </div> */}
 
-                        <div className="flex justify-end h-[600px]">
-                            <div className="w-full md:w-1/2 p-4 bg-[#FFFDD0] rounded-lg shadow-md flex flex-col">
-                                <div className="mb-4 flex justify-between">
-                                    <h3 className="text-2xl text-gray-700 font-bold">Current Sale</h3>
-                                    {/* <h3 className="text-5xl text-gray-700 font-bold">Total: ₱{total.toFixed(2)}</h3> */}
+                        <div className='flex justify-between'>
+
+                            <div className="w-[49%] p-4 bg-[#FFFDD0] rounded-lg shadow-md mt-5">
+                                <div className="max-h-[270px] overflow-y-auto"> {/* Set max height and enable vertical scrolling */}
+                                    <table className="min-w-full divide-y divide-gray-200">
+                                        <thead className="bg-[#6F4E37]">
+                                            <tr>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Barcode</th>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Product Name</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="bg-white divide-y divide-gray-200">
+                                            {products.length === 0 ? (
+                                                <tr>
+                                                    <td colSpan="2" className="px-6 py-4 text-center text-gray-500">No products available</td>
+                                                </tr>
+                                            ) : (
+                                                products.map((product, index) => (
+                                                    <tr key={index}>
+                                                        <td className="px-6 py-4 whitespace-nowrap">{product.barcode}</td>
+                                                        <td className="px-6 py-4 whitespace-nowrap">{product.p_name}</td>
+                                                    </tr>
+                                                ))
+                                            )}
+                                        </tbody>
+                                    </table>
                                 </div>
-                                <div className="mb-4 space-y-4">
-                                    <input
-                                        type="text"
-                                        placeholder="Filter by name"
-                                        value={filterName}
-                                        onChange={e => setFilterName(e.target.value)}
-                                        className="border border-gray-300 rounded p-2 w-full"
-                                        autoFocus
-                                    />
-                                    {/* <input
+                            </div>
+
+                            <div className="flex justify-end h-[600px]">
+                                <div className="w-full md:w-80 p-4 bg-[#FFFDD0] rounded-lg shadow-md flex flex-col">
+                                    <div className="mb-4 flex justify-between">
+                                        <h3 className="text-2xl text-gray-700 font-bold">Current Sale</h3>
+                                        {/* <h3 className="text-5xl text-gray-700 font-bold">Total: ₱{total.toFixed(2)}</h3> */}
+                                    </div>
+                                    <div className="mb-4 space-y-4">
+                                        <input
+                                            type="text"
+                                            placeholder="Filter by name"
+                                            value={filterName}
+                                            onChange={e => setFilterName(e.target.value)}
+                                            className="border border-gray-300 rounded p-2 w-full"
+                                            autoFocus
+                                        />
+                                        {/* <input
                             type="date"
                             placeholder="Start date"
                             value={startDate}
@@ -919,68 +957,42 @@ const Dashboard = ({ isVisible, onClose }) => {
                             onChange={e => setEndDate(e.target.value)}
                             className="border border-gray-300 rounded p-2 w-full"
                         /> */}
-                                </div>
-                                <div className="mb-4">
-                                    <h3 className="text-xl font-bold">Total of Today's Transactions: ₱{getTodayTotal().toFixed(2)}</h3>
-                                    <h3 className="text-xl font-bold">Total for Filtered Transactions: ₱{getTotalForTransactions(filteredTransactions).toFixed(2)}</h3>
-                                </div>
-                                <div className="flex-1 overflow-y-auto">
-                                    {filteredTransactions.length === 0 ? (
-                                        <p>No transactions found.</p>
-                                    ) : (
-                                        filteredTransactions.map((transaction, index) => (
-                                            <div key={index} className="border p-4 rounded report-item mb-4">
-                                                <p><strong>User:</strong> {transaction.user_username}</p>
-                                                <p><strong>Date/Time:</strong> {transaction.sale_date}</p>
-                                                <p><strong>Total:</strong> ₱{transaction.sale_totalAmount.toFixed(2)}</p>
-                                                <p><strong>Cash Tendered:</strong> ₱{transaction.sale_cashTendered.toFixed(2)}</p>
-                                                <p><strong>Change:</strong> ₱{transaction.sale_change.toFixed(2)}</p>
-                                                <div>
-                                                    <strong>Items:</strong>
-                                                    <ul className="list-disc pl-5">
-                                                        {transaction.items.map((item, idx) => (
-                                                            <li key={idx}>{item.sale_item_quantity} x {item.product_name} - ₱{item.sale_item_price.toFixed(2)}</li>
-                                                        ))}
-                                                    </ul>
-                                                </div>
-                                            </div>
-                                        ))
-                                    )}
-                                    <div ref={transactionsEndRef} /> {/* This element ensures scrolling to bottom */}
-                                </div>
-                            </div>
-                        </div>
-
-
-
-
-
-                        <div className="w-[49%] p-4 bg-[#FFFDD0] rounded-lg shadow-md mt-5">
-                            <div className="max-h-[270px] overflow-y-auto"> {/* Set max height and enable vertical scrolling */}
-                                <table className="min-w-full divide-y divide-gray-200">
-                                    <thead className="bg-[#6F4E37]">
-                                        <tr>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Barcode</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Product Name</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="bg-white divide-y divide-gray-200">
-                                        {products.length === 0 ? (
-                                            <tr>
-                                                <td colSpan="2" className="px-6 py-4 text-center text-gray-500">No products available</td>
-                                            </tr>
+                                    </div>
+                                    <div className="mb-4">
+                                        <h3 className="text-xl font-bold">Total of Today's Transactions: ₱{getTodayTotal().toFixed(2)}</h3>
+                                        <h3 className="text-xl font-bold">Total for Filtered Transactions: ₱{getTotalForTransactions(filteredTransactions).toFixed(2)}</h3>
+                                    </div>
+                                    <div className="flex-1 overflow-y-auto">
+                                        {filteredTransactions.length === 0 ? (
+                                            <p>No transactions found.</p>
                                         ) : (
-                                            products.map((product, index) => (
-                                                <tr key={index}>
-                                                    <td className="px-6 py-4 whitespace-nowrap">{product.barcode}</td>
-                                                    <td className="px-6 py-4 whitespace-nowrap">{product.p_name}</td>
-                                                </tr>
+                                            filteredTransactions.map((transaction, index) => (
+                                                <div key={index} className="border p-4 rounded report-item mb-4">
+                                                    <p><strong>User:</strong> {transaction.user_username}</p>
+                                                    <p><strong>Date/Time:</strong> {transaction.sale_date}</p>
+                                                    <p><strong>Total:</strong> ₱{transaction.sale_totalAmount.toFixed(2)}</p>
+                                                    <p><strong>Cash Tendered:</strong> ₱{transaction.sale_cashTendered.toFixed(2)}</p>
+                                                    <p><strong>Change:</strong> ₱{transaction.sale_change.toFixed(2)}</p>
+                                                    <div>
+                                                        <strong>Items:</strong>
+                                                        <ul className="list-disc pl-5">
+                                                            {transaction.items.map((item, idx) => (
+                                                                <li key={idx}>{item.sale_item_quantity} x {item.product_name} - ₱{item.sale_item_price.toFixed(2)}</li>
+                                                            ))}
+                                                        </ul>
+                                                    </div>
+                                                </div>
                                             ))
                                         )}
-                                    </tbody>
-                                </table>
+                                        <div ref={transactionsEndRef} /> {/* This element ensures scrolling to bottom */}
+                                    </div>
+                                </div>
                             </div>
+
+
                         </div>
+
+
 
 
                         {/* <div className="mb-4">

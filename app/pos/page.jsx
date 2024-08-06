@@ -66,6 +66,16 @@ const Dashboard = ({ isVisible, onClose }) => {
     }, [role]);
 
 
+    if (isLoggedIn) {
+        return null;
+    }
+
+    useEffect(() => {
+        const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+        if (!isLoggedIn) {
+            router.push('/');
+        }
+    }, []);
 
 
 
@@ -655,10 +665,13 @@ const Dashboard = ({ isVisible, onClose }) => {
         setFullname('');
         setRole('');
         setIsAdmin(false);
+        localStorage.removeItem('isLoggedIn', 'true');
+
 
         localStorage.removeItem('name');
         localStorage.removeItem('role');
         localStorage.removeItem('currentUsername');
+        localStorage.removeItem('user_id');
 
         router.push('/');
     };
@@ -1026,7 +1039,7 @@ const Dashboard = ({ isVisible, onClose }) => {
                         <h2 className="text-3xl font-bold text-[#FFFDD0]">Coffee Thingy</h2>
                         <div>
                             <h2 className="text-3xl font-bold text-[#FFFDD0]">Welcome, {fullname}</h2>
-                            <h2 className="text-xl font-semibold text-[#FFFDD0]">Remaining Balance: ${beginningBalance.toFixed(2)}</h2>
+                            <h2 className="text-2xl font-semibold text-[#FFFDD0]">Remaining Balance: ₱{beginningBalance.toFixed(2)}</h2>
                         </div>
                     </div>
 
@@ -1141,7 +1154,7 @@ const Dashboard = ({ isVisible, onClose }) => {
 
 
                     <div className="w-[49%] p-4 bg-[#FFFDD0] rounded-lg shadow-md mt-5">
-                        <div className="max-h-[270px] overflow-y-auto"> {/* Set max height and enable vertical scrolling */}
+                        <div className="max-h-[270px] overflow-y-auto">
                             <table className="min-w-full divide-y divide-gray-200">
                                 <thead className="bg-[#6F4E37]">
                                     <tr>
@@ -1157,8 +1170,8 @@ const Dashboard = ({ isVisible, onClose }) => {
                                     ) : (
                                         products.map((product, index) => (
                                             <tr key={index}>
-                                                <td className="px-6 py-4 whitespace-nowrap">{product.barcode}</td>
-                                                <td className="px-6 py-4 whitespace-nowrap">{product.p_name}</td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-xl">{product.prod_id}</td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-xl">{product.prod_name}</td>
                                             </tr>
                                         ))
                                     )}

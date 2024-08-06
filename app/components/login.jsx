@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import { toast } from 'sonner';
 
-
 const Login = () => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
@@ -16,9 +15,10 @@ const Login = () => {
     useEffect(() => {
         const storedName = localStorage.getItem('name');
         const storedRole = localStorage.getItem('role');
+        const storedIsLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
 
-        if (storedName && storedRole) {
-
+        if (storedName && storedRole && storedIsLoggedIn) {
+            setIsLoggedIn(true);
             router.push(storedRole === 'admin' ? '/posAdmin' : '/pos');
         }
     }, [router]);
@@ -42,6 +42,7 @@ const Login = () => {
                     localStorage.setItem('role', result.data[0].user_level);
                     localStorage.setItem('currentUsername', username);
                     localStorage.setItem('user_id', result.data[0].user_id);
+                    localStorage.setItem('isLoggedIn', 'true');
                     setIsLoggedIn(true);
                     setIsAdmin(result.data[0].user_level === 'admin');
 
@@ -56,17 +57,11 @@ const Login = () => {
         }
     };
 
-
     useEffect(() => {
         if (username && password) {
             handleLogin();
         }
     }, [username, password]);
-
-
-    if (isLoggedIn) {
-        return null;
-    }
 
     return (
         <div className="flex flex-col md:flex-row min-h-screen">

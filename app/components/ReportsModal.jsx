@@ -11,12 +11,10 @@ const ReportsModal = ({ isVisible, onClose }) => {
 
     useEffect(() => {
         if (isVisible) {
-
             axios.post('http://localhost/pos/sales.php', new URLSearchParams({
-                operation: 'getZReport'
+                operation: 'getZAllReport'
             }))
                 .then(response => {
-
                     if (Array.isArray(response.data)) {
                         setTransactions(response.data);
                     } else {
@@ -33,15 +31,19 @@ const ReportsModal = ({ isVisible, onClose }) => {
 
     const filteredTransactions = transactions.filter(transaction => {
         const transactionDate = parseDate(transaction.sale_date);
-        const start = startDate ? new Date(startDate) : null;
-        const end = endDate ? new Date(new Date(endDate).setHours(23, 59, 59, 999)) : null;
+
+        // Convert startDate and endDate to Date objects
+        const start = startDate ? new Date(startDate + 'T00:00:00') : null;
+        const end = endDate ? new Date(new Date(endDate + 'T23:59:59')) : null;
 
         return (
-            (!filterName || transaction.user_username === filterName) &&
+            (!filterName || transaction.user_username.toLowerCase().includes(filterName.toLowerCase())) &&
             (!start || transactionDate >= start) &&
             (!end || transactionDate <= end)
         );
     });
+
+
 
     const getTotalForTransactions = (transactionsList) => {
         return transactionsList.reduce((total, transaction) => total + transaction.sale_totalAmount, 0);
