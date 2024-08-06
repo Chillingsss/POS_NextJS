@@ -10,6 +10,7 @@ const ReportsUserModal = ({ isVisible, onClose }) => {
     const [endDate, setEndDate] = useState('');
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [totalForToday, setTotalForToday] = useState(0);
 
     const username = localStorage.getItem('currentUsername');
     const userId = localStorage.getItem('user_id');
@@ -35,8 +36,9 @@ const ReportsUserModal = ({ isVisible, onClose }) => {
             });
 
             const data = response.data;
-            if (Array.isArray(data)) {
-                setTransactions(data.sort((a, b) => new Date(b.sale_date) - new Date(a.sale_date)));
+            if (data && Array.isArray(data.sales)) {
+                setTransactions(data.sales.sort((a, b) => new Date(b.sale_date) - new Date(a.sale_date)));
+                setTotalForToday(parseFloat(data.total_for_today) || 0); // Ensure total is a number
             } else {
                 setError('Error fetching transactions');
             }
@@ -48,20 +50,14 @@ const ReportsUserModal = ({ isVisible, onClose }) => {
     };
 
     const parseDate = (dateString) => {
-
         const parsedDate = new Date(Date.parse(dateString));
         return isNaN(parsedDate.getTime()) ? null : parsedDate;
     };
-
 
     const filteredTransactions = transactions.filter(transaction => {
         const transactionDate = parseDate(transaction.sale_date);
         const start = startDate ? new Date(startDate + 'T00:00:00') : null;
         const end = endDate ? new Date(endDate + 'T23:59:59') : null;
-
-        console.log(`Transaction Date: ${transactionDate}`);
-        console.log(`Start Date: ${start}`);
-        console.log(`End Date: ${end}`);
 
         return (
             (!filterName || transaction.user_username === filterName) &&
@@ -70,29 +66,8 @@ const ReportsUserModal = ({ isVisible, onClose }) => {
         );
     });
 
-
     const getTotalForDateRange = (transactions) => {
         return transactions.reduce((total, transaction) => total + transaction.sale_totalAmount, 0);
-    };
-
-    const getTodayTotal = () => {
-        const today = new Date();
-        const startOfToday = new Date(today.toDateString());
-        const endOfToday = new Date(today.toDateString());
-        endOfToday.setHours(23, 59, 59, 999);
-
-        console.log("Start of Today:", startOfToday);
-        console.log("End of Today:", endOfToday);
-
-        const todayTransactions = transactions.filter(transaction => {
-            const transactionDate = parseDate(transaction.sale_date);
-            console.log(`Transaction Date: ${transactionDate}, Transaction Sale Date: ${transaction.sale_date}`);
-            return transactionDate >= startOfToday && transactionDate <= endOfToday;
-        });
-
-        console.log("Today's Transactions:", todayTransactions);
-
-        return getTotalForDateRange(todayTransactions);
     };
 
     useEffect(() => {
@@ -101,7 +76,7 @@ const ReportsUserModal = ({ isVisible, onClose }) => {
                 onClose();
             }
             if (event.ctrlKey && event.key === 'F10') {
-                printContent('userTransactions');
+                printContent('userTransactions', totalForToday);
             }
         };
 
@@ -110,34 +85,19 @@ const ReportsUserModal = ({ isVisible, onClose }) => {
         return () => {
             window.removeEventListener('keydown', handleKeyDown);
         };
-    }, [onClose]);
+    }, [onClose, totalForToday]);
 
-    const printContent = (contentId) => {
+    const printContent = (contentId, totalForToday) => {
         const contentElement = document.getElementById(contentId);
         if (!contentElement) {
             console.error(`Element with ID ${contentId} not found.`);
             return;
         }
 
-        // Improved date parsing
-        const parseDate = (dateString) => {
-            const parsedDate = new Date(dateString);
-            if (isNaN(parsedDate.getTime())) {
-                console.error(`Invalid date: ${dateString}`);
-                return null;
-            }
-            return parsedDate;
-        };
-
-        // Move filteredTransactions calculation inside printContent
         const filteredTransactions = transactions.filter(transaction => {
             const transactionDate = parseDate(transaction.sale_date);
             const start = startDate ? new Date(startDate + 'T00:00:00') : null;
             const end = endDate ? new Date(endDate + 'T23:59:59') : null;
-
-            console.log(`Transaction Date: ${transactionDate}`);
-            console.log(`Start Date: ${start}`);
-            console.log(`End Date: ${end}`);
 
             return (
                 (!filterName || transaction.user_username === filterName) &&
@@ -146,31 +106,8 @@ const ReportsUserModal = ({ isVisible, onClose }) => {
             );
         });
 
-        console.log("Filtered Transactions:", filteredTransactions);
-
         const getTotalForDateRange = (transactions) => {
             return transactions.reduce((total, transaction) => total + transaction.sale_totalAmount, 0);
-        };
-
-        const getTodayTotal = () => {
-            const today = new Date();
-            const startOfToday = new Date(today.toDateString());
-            const endOfToday = new Date(today.toDateString());
-            endOfToday.setHours(23, 59, 59, 999);
-
-            console.log("Start of Today:", startOfToday);
-            console.log("End of Today:", endOfToday);
-
-            // Use filteredTransactions for final filtering
-            const todayTransactions = filteredTransactions.filter(transaction => {
-                const transactionDate = parseDate(transaction.sale_date);
-                console.log(`Transaction Date: ${transactionDate}`);
-                return transactionDate >= startOfToday && transactionDate <= endOfToday;
-            });
-
-            console.log("Today's Transactions:", todayTransactions);
-
-            return getTotalForDateRange(todayTransactions);
         };
 
         const printDate = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
@@ -209,14 +146,12 @@ const ReportsUserModal = ({ isVisible, onClose }) => {
                         .receipt-header p {
                             margin: 5px 0;
                         }
-                        .receipt-item {
+                        .transaction-item {
                             border-bottom: 1px solid #ddd;
                             padding: 5px 0;
-                            display: flex;
-                            justify-content: space-between;
-                            margin-bottom: 5px;
+                            margin-bottom: 10px;
                         }
-                        .receipt-item:last-child {
+                        .transaction-item:last-child {
                             border-bottom: none;
                         }
                         .receipt-total {
@@ -233,9 +168,26 @@ const ReportsUserModal = ({ isVisible, onClose }) => {
                             <h2>Print Report</h2>
                             <p>Date: ${printDate}</p>
                         </div>
-                        ${contentHtml}
+                        ${filteredTransactions.map(transaction => `
+                            <div class="transaction-item">
+                                <p><strong>User:</strong> ${transaction.user_username}</p>
+                                <p><strong>Date/Time:</strong> ${transaction.sale_date}</p>
+                                <p><strong>Total:</strong> ₱${transaction.sale_totalAmount.toFixed(2)}</p>
+                                <p><strong>Cash Tendered:</strong> ₱${transaction.sale_cashTendered.toFixed(2)}</p>
+                                <p><strong>Change:</strong> ₱${transaction.sale_change.toFixed(2)}</p>
+                                <div>
+                                    <strong>Items:</strong>
+                                    <ul class="list-disc pl-5">
+                                        ${transaction.items.map(item => `
+                                            <li>${item.product_name} - ${item.sale_item_quantity}</li>
+                                        `).join('')}
+                                    </ul>
+                                </div>
+                            </div>
+                        `).join('')}
                         <div class="receipt-total">
-                            <h3 class="text-xl font-bold">Total of Today's Transactions: ₱${getTodayTotal().toFixed(2)}</h3>
+                            <h3>Total of Today's Transactions: ₱${totalForToday.toFixed(2)}</h3>
+                            
                         </div>
                     </div>
                 </body>
@@ -245,10 +197,6 @@ const ReportsUserModal = ({ isVisible, onClose }) => {
         printWindow.focus();
         printWindow.print();
     };
-
-
-
-
 
 
     return (
@@ -276,7 +224,7 @@ const ReportsUserModal = ({ isVisible, onClose }) => {
                         />
                     </div>
                     <div className="mb-4">
-                        <h3 className="text-xl font-bold">Total of Today's Transactions: ₱{getTodayTotal().toFixed(2)}</h3>
+                        <h3 className="text-xl font-bold">Total of Today's Transactions: ₱{totalForToday.toFixed(2)}</h3>
                         <h3 className="text-xl font-bold">Total for Selected Date Range: ₱{getTotalForDateRange(filteredTransactions).toFixed(2)}</h3>
                     </div>
                     <div id="userTransactions" className="overflow-y-auto max-h-96">
@@ -294,7 +242,7 @@ const ReportsUserModal = ({ isVisible, onClose }) => {
                                         <strong>Items:</strong>
                                         <ul className="list-disc pl-5">
                                             {transaction.items.map((item, idx) => (
-                                                <li key={idx}>{item.product_name} - {item.quantity}</li>
+                                                <li key={idx}>{item.product_name} - {item.sale_item_quantity}</li>
                                             ))}
                                         </ul>
                                     </div>
