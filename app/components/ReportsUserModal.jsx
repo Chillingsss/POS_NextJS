@@ -75,7 +75,7 @@ const ReportsUserModal = ({ isVisible, onClose }) => {
             if (event.key === 'Escape') {
                 onClose();
             }
-            if (event.ctrlKey && event.key === 'F10') {
+            if (event.ctrlKey && event.key === 'p') {
                 printContent('userTransactions', totalForToday);
             }
         };
@@ -207,7 +207,7 @@ const ReportsUserModal = ({ isVisible, onClose }) => {
                         <h2 className="text-2xl font-bold">User Transaction Reports</h2>
                         <button onClick={onClose} className="text-red-500 font-bold">Close</button>
                     </div>
-                    <div className="mb-4 space-y-4">
+                    {/* <div className="mb-4 space-y-4">
                         <input
                             type="date"
                             placeholder="Start date"
@@ -222,10 +222,10 @@ const ReportsUserModal = ({ isVisible, onClose }) => {
                             onChange={e => setEndDate(e.target.value)}
                             className="border border-gray-300 rounded p-2 w-full"
                         />
-                    </div>
+                    </div> */}
                     <div className="mb-4">
                         <h3 className="text-xl font-bold">Total of Today's Transactions: ₱{totalForToday.toFixed(2)}</h3>
-                        <h3 className="text-xl font-bold">Total for Selected Date Range: ₱{getTotalForDateRange(filteredTransactions).toFixed(2)}</h3>
+                        {/* <h3 className="text-xl font-bold">Total for Selected Date Range: ₱{getTotalForDateRange(filteredTransactions).toFixed(2)}</h3> */}
                     </div>
                     <div id="userTransactions" className="overflow-y-auto max-h-96">
                         {filteredTransactions.length === 0 ? (

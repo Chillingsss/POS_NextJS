@@ -967,7 +967,31 @@ const Dashboard = ({ isVisible, onClose }) => {
         return () => document.removeEventListener('keydown', handleKeyDown);
     }, [selectedItemIndex, items]);
 
+    const [currentTime, setCurrentTime] = useState(new Date());
 
+    useEffect(() => {
+        const intervalId = setInterval(() => {
+            setCurrentTime(new Date());
+        }, 1000); // Update the time every second
+
+        return () => clearInterval(intervalId); // Clear the interval on component unmount
+    }, []);
+
+    const formatTime = (date) => {
+        return date.toLocaleTimeString('en-US', {
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+        });
+    };
+
+    const formatDate = (date) => {
+        return date.toLocaleDateString('en-GB', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+        });
+    };
 
     return (
         <>
@@ -1014,61 +1038,44 @@ const Dashboard = ({ isVisible, onClose }) => {
             <div className="flex min-h-screen">
 
 
-                {/* <div className="bg-gray-900 text-white p-4 shadow-lg w-full md:w-64 md:fixed top-0 left-0 h-full flex flex-col">
-                            <h2 className="text-3xl font-bold mb-6">POS System</h2>
-                            <ul className="space-y-4">
-                                <li className="text-lg font-semibold hover:text-gray-300">Dashboard</li>
-                                <li className="text-lg font-semibold hover:text-gray-300">Sales</li>
-                                <li className="text-lg font-semibold hover:text-gray-300">Inventory</li>
-                                <li className="text-lg font-semibold hover:text-gray-300">Reports</li>
-                            </ul>
-                            <div className="mt-auto">
-                                <button
-                                    onClick={handleLogout}
-                                    className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md w-full"
-                                >
-                                    Logout
-                                </button>
-                            </div>
-                        </div> */}
-
-
-
-                <div className="flex-grow bg-[#6F4E37] p-4 ">
-                    <div className="flex justify-between items-center mb-2 md:mt-0">
-                        <h2 className="text-3xl font-bold text-[#FFFDD0]">Coffee Thingy</h2>
+                <div className="flex-grow bg-[#FFFDD0] p-4 ">
+                    <div className="flex justify-between items-center p-4 bg-[#262673] shadow-md rounded-lg mb-4">
                         <div>
-                            <h2 className="text-3xl font-bold text-[#FFFDD0]">Welcome, {fullname}</h2>
-                            <h2 className="text-2xl font-semibold text-[#FFFDD0]">Remaining Balance: ₱{beginningBalance.toFixed(2)}</h2>
+                            <h2 className="text-3xl font-bold text-gray-300">Macs Store</h2>
+                            <p className="text-xl text-gray-300">{formatDate(currentTime)} - {formatTime(currentTime)}</p>
+                        </div>
+                        <div>
+                            <h2 className="text-2xl font-semibold text-gray-300">Welcome, {fullname}</h2>
+                            <p className="text-xl font-medium text-gray-300">Remaining Balance: ₱{beginningBalance.toFixed(2)}</p>
                         </div>
                     </div>
 
-
-                    <div className='flex md:flex-row gap-4'>
-                        <div className="w-full md:w-1/2 p-4 bg-[#FFFDD0] rounded-lg shadow-md">
+                    {/* md:flex-row */}
+                    <div className='flex justify-between'>
+                        <div className="w-[40%] h-56 p-4 bg-[#262673] rounded-lg shadow-md">
                             <form onSubmit={(e) => e.preventDefault()}>
                                 <div className="grid grid-cols-1 gap-4">
                                     <div className="mb-4">
-                                        <label htmlFor="quantity" className="block text-gray-700 font-bold mb-2">Quantity:</label>
+                                        <label htmlFor="quantity" className="block text-white font-bold mb-2">Quantity:</label>
                                         <input
                                             type="text"
                                             id="quantity"
                                             value={quantity}
                                             onChange={(e) => setQuantity(e.target.value)}
-                                            className="border text-white rounded-md px-3 py-2 w-full bg-[#6F4E37]"
+                                            className="border text-black rounded-md px-3 py-2 w-full bg-gray-300"
                                             required
                                             ref={quantityRef}
                                             autoFocus
                                         />
                                     </div>
                                     <div className="mb-4">
-                                        <label htmlFor="barcode" className="block text-gray-700 font-bold mb-2 ">Barcode:</label>
+                                        <label htmlFor="barcode" className="block text-white font-bold mb-2 ">Barcode:</label>
                                         <input
                                             type="text"
                                             id="barcode"
                                             value={barcode}
                                             onChange={(e) => setBarcode(e.target.value)}
-                                            className="border text-white rounded-md px-3 py-2 w-full bg-[#6F4E37]"
+                                            className="border text-black rounded-md px-3 py-2 w-full bg-gray-300"
                                             required
                                             ref={barcodeRef}
                                         />
@@ -1077,20 +1084,20 @@ const Dashboard = ({ isVisible, onClose }) => {
                             </form>
                         </div>
 
-                        <div className="w-full md:w-1/2 p-4 bg-[#FFFDD0] rounded-lg shadow-md">
-                            <div className="mb-4 flex justify-between">
+                        <div className="w-[55%] p-4 bg-[#FFFDD0] rounded-lg shadow-md">
+                            <div className="mb-4 flex justify-between items-center">
                                 <h3 className="text-2xl text-gray-700 font-bold">Current Sale</h3>
-                                <h3 className="text-5xl text-gray-700 font-bold">Total: ₱{total.toFixed(2)}</h3>
+                                <h3 className="text-3xl text-gray-700 font-bold">Total: ₱{total.toFixed(2)}</h3>
                             </div>
                             <div className="overflow-x-auto h-72">
-                                <table className="min-w-full border text-black border-gray-200 shadow-md rounded-md bg-[#6F4E37]">
-                                    <thead className="bg-[#6F4E37] border-b border-gray-200">
+                                <table className="min-w-full border text-black border-gray-200 shadow-md rounded-md bg-[#262673]">
+                                    <thead className="bg-[#262673] text-white">
                                         <tr>
-                                            <th className="px-4 py-2 text-left text-base font-medium text-white uppercase tracking-wider">ID</th>
-                                            <th className="px-4 py-2 text-left text-base font-medium text-white uppercase tracking-wider">Quantity</th>
-                                            <th className="px-4 py-2 text-left text-base font-medium text-white uppercase tracking-wider">Product</th>
-                                            <th className="px-4 py-2 text-left text-base font-medium text-white uppercase tracking-wider">Price</th>
-                                            <th className="px-4 py-2 text-left text-base font-medium text-white uppercase tracking-wider">Amount</th>
+                                            <th className="px-4 py-2 text-left text-base font-medium uppercase tracking-wider">ID</th>
+                                            <th className="px-4 py-2 text-left text-base font-medium uppercase tracking-wider">Quantity</th>
+                                            <th className="px-4 py-2 text-left text-base font-medium uppercase tracking-wider">Product</th>
+                                            <th className="px-4 py-2 text-left text-base font-medium uppercase tracking-wider">Price</th>
+                                            <th className="px-4 py-2 text-left text-base font-medium uppercase tracking-wider">Amount</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -1098,34 +1105,29 @@ const Dashboard = ({ isVisible, onClose }) => {
                                             items.map((item, index) => (
                                                 <tr
                                                     key={index}
-                                                    className={`cursor-pointer ${selectedItemIndex === index ? 'bg-yellow-200' : index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}`}
+                                                    className={`cursor-pointer ${selectedItemIndex === index ? 'bg-yellow-200' : index % 2 === 0 ? 'bg-white' : 'bg-gray-100'}`}
                                                     onClick={() => setSelectedItemIndex(index)}
                                                     ref={el => (itemsRef.current[index] = el)}
                                                 >
                                                     <td className="px-4 py-2 text-lg">{item.prod_id}</td>
                                                     <td className="px-4 py-2 text-lg">{item.quantity}</td>
                                                     <td className="px-4 py-2 text-lg">{item.product}</td>
-                                                    <td className="px-4 py-2 text-lg">${parseFloat(item.price).toFixed(2)}</td>
-                                                    <td className="px-4 py-2 text-lg">${parseFloat(item.amount).toFixed(2)}</td>
+                                                    <td className="px-4 py-2 text-lg">₱{parseFloat(item.price).toFixed(2)}</td>
+                                                    <td className="px-4 py-2 text-lg">₱{parseFloat(item.amount).toFixed(2)}</td>
                                                 </tr>
                                             ))
                                         ) : (
                                             <tr>
-                                                <td colSpan="5" className="px-4 py-2 text-lg text-center">No products available</td>
+                                                <td colSpan="5" className="px-4 py-2 text-lg text-center text-gray-700 bg-white">No products available</td>
                                             </tr>
                                         )}
                                     </tbody>
                                 </table>
                             </div>
 
-
-
-
-
-
                             {isCashInputVisible && (
                                 <div className="mt-2">
-                                    <div className="flex justify-end ">
+                                    <div className="flex justify-end">
                                         <div className="flex items-center">
                                             <label htmlFor="cashTendered" className="text-gray-700 font-bold mr-4 flex-shrink-0">Cash:</label>
                                             <input
@@ -1146,98 +1148,65 @@ const Dashboard = ({ isVisible, onClose }) => {
                                     )}
                                 </div>
                             )}
-
-
                         </div>
+
                     </div>
 
 
-
-                    <div className="w-[49%] p-4 bg-[#FFFDD0] rounded-lg shadow-md mt-5">
-                        <div className="max-h-[270px] overflow-y-auto">
-                            <table className="min-w-full divide-y divide-gray-200">
-                                <thead className="bg-[#6F4E37]">
-                                    <tr>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Barcode</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Product Name</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="bg-white divide-y divide-gray-200">
-                                    {products.length === 0 ? (
+                    <div className="flex justify-between mt-4 space-x-4">
+                        <div className="w-[49%] p-4 bg-[#FFFDD0] rounded-lg shadow-md">
+                            <div className="max-h-[270px] overflow-y-auto">
+                                <table className="min-w-full divide-y divide-gray-200">
+                                    <thead className="bg-[#262673] text-white">
                                         <tr>
-                                            <td colSpan="2" className="px-6 py-4 text-center text-gray-500">No products available</td>
+                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Barcode</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Product Name</th>
                                         </tr>
-                                    ) : (
-                                        products.map((product, index) => (
-                                            <tr key={index}>
-                                                <td className="px-6 py-4 whitespace-nowrap text-xl">{product.prod_id}</td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-xl">{product.prod_name}</td>
+                                    </thead>
+                                    <tbody className="bg-white divide-y divide-gray-200">
+                                        {products.length === 0 ? (
+                                            <tr>
+                                                <td colSpan="2" className="px-6 py-4 text-center text-gray-700">No products available</td>
                                             </tr>
-                                        ))
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-
-                    {/* <div className="mb-4">
-                                <h2 className="text-lg font-semibold text-[#FFFDD0] mt-5">Load Transaction</h2>
-                                <div className="space-y-2">
-                                    {JSON.parse(localStorage.getItem('savedTransactions'))?.filter(transaction => transaction.username === getCurrentUsername()).map((transaction, index) => {
-
-                                        const itemDetails = transaction.items
-                                            .map(item => `${item.quantity} x ${item.product}`)
-                                            .join(', ');
-                                        const summary = `${itemDetails} | Total: $${transaction.total.toFixed(2)}`;
-
-                                        const isSelected = index === selectedTransactionIndex;
-                                        const buttonClasses = `w-full sm:w-96 ml-0 sm:ml-4 py-2 rounded-lg ${isSelected ? 'bg-blue-700' : 'bg-blue-500'} text-white hover:bg-blue-600 ${items.length > 0 ? 'opacity-50 cursor-not-allowed' : ''}`;
-
-                                        return (
-                                            <button
-                                                onClick={() => handleLoadTransaction(index)}
-                                                key={index}
-                                                className={buttonClasses}
-                                                disabled={items.length > 0}
-                                            >
-                                                Load Transaction {index + 1} - {summary}
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-                            </div> */}
-
-                    {showCustomerNameModal && (
-                        <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50">
-                            <div className="bg-white p-6 rounded-lg shadow-lg">
-                                <h2 className="text-xl font-semibold mb-4">Enter Customer Name</h2>
-                                <input
-                                    type="text"
-                                    value={customerName}
-                                    onChange={(e) => setCustomerName(e.target.value)}
-                                    className="border text-black rounded-md px-3 py-2 w-full mb-4"
-                                    placeholder="Customer Name"
-                                    autoFocus
-                                />
-                                <button
-                                    onClick={handleSaveTransaction}
-                                    className="bg-blue-500 text-white py-2 px-4 rounded-md"
-                                >
-                                    Save Transaction
-
-                                </button>
-                                <button
-                                    onClick={() => setShowCustomerNameModal(false)}
-                                    className="bg-red-500 text-white py-2 px-4 rounded-md ml-4"
-                                >
-                                    Cancel
-                                </button>
+                                        ) : (
+                                            products.map((product, index) => (
+                                                <tr key={index}>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-lg">{product.prod_id}</td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-lg">{product.prod_name}</td>
+                                                </tr>
+                                            ))
+                                        )}
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
-                    )}
-
-
+                        <div className="w-[49%] p-4 bg-[#FFFDD0] rounded-lg shadow-md">
+                            <div className="max-h-[270px] overflow-y-auto">
+                                <table className="min-w-full divide-y divide-gray-200">
+                                    <thead className="bg-[#262673] text-white">
+                                        <tr>
+                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Barcode</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Product Name</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="bg-white divide-y divide-gray-200">
+                                        {products.length === 0 ? (
+                                            <tr>
+                                                <td colSpan="2" className="px-6 py-4 text-center text-gray-700">No products available</td>
+                                            </tr>
+                                        ) : (
+                                            products.map((product, index) => (
+                                                <tr key={index}>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-lg">{product.prod_id}</td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-lg">{product.prod_name}</td>
+                                                </tr>
+                                            ))
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
 
                 </div>
 

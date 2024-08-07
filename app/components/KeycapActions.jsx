@@ -31,7 +31,7 @@ const KeycapActions = ({
             // }
 
 
-            if (event.ctrlKey && event.key === 'c') {
+            if (event.ctrlKey && event.key === 'F1') {
                 event.preventDefault();
                 toggleCashInputVisibility();
                 return;
@@ -43,6 +43,24 @@ const KeycapActions = ({
                 return;
             }
 
+            if (event.ctrlKey && event.key === 'F2') {
+                event.preventDefault();
+                handlePaidTransaction();
+                return;
+            }
+
+            if (event.ctrlKey && event.key === 'F8') {
+                event.preventDefault();
+                if (isAdmin) {
+                    setShowReportsModal(true);
+                } else {
+                    alert('Only admins can view the reports.');
+                }
+
+                return;
+            }
+
+
             switch (event.key) {
                 // case 'V':
                 //     if (items.length > 0) {
@@ -50,24 +68,24 @@ const KeycapActions = ({
                 //     }
                 //     break;
 
-                case 'ArrowLeft':
-                    handlePaidTransaction();
-                    break;
+                // case 'ArrowLeft':
+                //     handlePaidTransaction();
+                //     break;
 
-                case '`':
-                    const transactions = JSON.parse(localStorage.getItem('savedTransactions')) || [];
-                    if (transactions.length > 0) {
-                        setSelectedTransactionIndex(prevIndex => {
-                            const nextIndex = (prevIndex === null || prevIndex === transactions.length - 1) ? 0 : prevIndex + 1;
-                            return nextIndex;
-                        });
-                    }
-                    break;
-                case '0':
-                    if (selectedTransactionIndex !== null) {
-                        handleLoadTransaction(selectedTransactionIndex);
-                    }
-                    break;
+                // case '`':
+                //     const transactions = JSON.parse(localStorage.getItem('savedTransactions')) || [];
+                //     if (transactions.length > 0) {
+                //         setSelectedTransactionIndex(prevIndex => {
+                //             const nextIndex = (prevIndex === null || prevIndex === transactions.length - 1) ? 0 : prevIndex + 1;
+                //             return nextIndex;
+                //         });
+                //     }
+                //     break;
+                // case '0':
+                //     if (selectedTransactionIndex !== null) {
+                //         handleLoadTransaction(selectedTransactionIndex);
+                //     }
+                //     break;
 
                 case 'L':
                     handleLogout();

@@ -666,19 +666,19 @@ const Dashboard = ({ isVisible, onClose }) => {
     }, []);
 
 
-    useEffect(() => {
-        const handleKeyDown = (event) => {
-            if (event.ctrlKey && event.key === 'F8') {
-                setIsVoidModalVisible(true);
-            }
-        };
+    // useEffect(() => {
+    //     const handleKeyDown = (event) => {
+    //         if (event.ctrlKey && event.key === 'F8') {
+    //             setIsVoidModalVisible(true);
+    //         }
+    //     };
 
-        window.addEventListener('keydown', handleKeyDown);
+    //     window.addEventListener('keydown', handleKeyDown);
 
-        return () => {
-            window.removeEventListener('keydown', handleKeyDown);
-        };
-    }, []);
+    //     return () => {
+    //         window.removeEventListener('keydown', handleKeyDown);
+    //     };
+    // }, []);
 
     useEffect(() => {
         const handleKeyDown = (event) => {
