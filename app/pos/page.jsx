@@ -140,7 +140,7 @@ const Dashboard = ({ isVisible, onClose }) => {
 
     const fetchAllProducts = async () => {
         try {
-            const response = await axios.post('http://localhost/pos/products.php', new URLSearchParams({
+            const response = await axios.post('http://192.168.1.3/pos/products.php', new URLSearchParams({
                 operation: 'getAllProduct',
             }), {
                 headers: {
@@ -257,7 +257,7 @@ const Dashboard = ({ isVisible, onClose }) => {
         // Fetch the remaining balance when the component mounts
         const fetchRemainingBalance = async () => {
             try {
-                const response = await axios.post('http://localhost/pos/balance.php',
+                const response = await axios.post('http://192.168.1.3/pos/balance.php',
                     new URLSearchParams({
                         operation: 'getBeginningBalance'
                     }),
@@ -286,7 +286,7 @@ const Dashboard = ({ isVisible, onClose }) => {
     useEffect(() => {
         const fetchBeginningBalance = async () => {
             try {
-                const response = await axios.post('http://localhost/pos/balance.php', new URLSearchParams({
+                const response = await axios.post('http://192.168.1.3/pos/balance.php', new URLSearchParams({
                     operation: 'getBeginningBalance'
                 }), {
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
@@ -307,7 +307,7 @@ const Dashboard = ({ isVisible, onClose }) => {
 
     const updateBeginningBalance = async (newBalance) => {
         try {
-            const response = await axios.post('http://localhost/pos/balance.php', new URLSearchParams({
+            const response = await axios.post('http://192.168.1.3/pos/balance.php', new URLSearchParams({
                 operation: 'updateBeginningBalance',
                 json: JSON.stringify({ amount: newBalance })
             }), {
@@ -381,7 +381,7 @@ const Dashboard = ({ isVisible, onClose }) => {
 
         if (password.length > 0) {
             try {
-                const response = await axios.post('http://localhost/pos/user.php', new URLSearchParams({
+                const response = await axios.post('http://192.168.1.3/pos/user.php', new URLSearchParams({
                     operation: 'verifyAdminPassword',
                     json: JSON.stringify({ password: password })
                 }), {
@@ -741,7 +741,7 @@ const Dashboard = ({ isVisible, onClose }) => {
         }
 
         try {
-            const response = await axios.post('http://localhost/pos/sales.php', new URLSearchParams({
+            const response = await axios.post('http://192.168.1.3/pos/sales.php', new URLSearchParams({
                 json: JSON.stringify(transactionData),
                 operation: 'saveTransaction'
             }), {

@@ -11,7 +11,7 @@ const ReportsModal = ({ isVisible, onClose }) => {
 
     useEffect(() => {
         if (isVisible) {
-            axios.post('http://localhost/pos/sales.php', new URLSearchParams({
+            axios.post('http://192.168.1.3/pos/sales.php', new URLSearchParams({
                 operation: 'getZAllReport'
             }))
                 .then(response => {

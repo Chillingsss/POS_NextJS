@@ -26,7 +26,7 @@ const ReportsUserModal = ({ isVisible, onClose }) => {
         try {
             setLoading(true);
 
-            const response = await axios.post('http://localhost/pos/sales.php', new URLSearchParams({
+            const response = await axios.post('http://192.168.1.3/pos/sales.php', new URLSearchParams({
                 operation: 'getShiftReport',
                 json: JSON.stringify({ userId })
             }), {

@@ -95,7 +95,7 @@ const Dashboard = ({ isVisible, onClose }) => {
 
     const fetchProductDetails = async (barcode) => {
         try {
-            const response = await axios.get('http://localhost/listing/sampleData.php', {
+            const response = await axios.get('http://192.168.1.3/listing/sampleData.php', {
                 params: { type: 'products' }
             });
             const data = response.data;
@@ -122,7 +122,7 @@ const Dashboard = ({ isVisible, onClose }) => {
 
     const fetchAllProducts = async () => {
         try {
-            const response = await axios.get('http://localhost/listing/sampleData.php', {
+            const response = await axios.get('http://192.168.1.3/listing/sampleData.php', {
                 params: { type: 'products' }
             });
             setProducts(response.data);
@@ -302,7 +302,7 @@ const Dashboard = ({ isVisible, onClose }) => {
 
         if (password.length > 0) {
             try {
-                const response = await axios.post('http://localhost/your_endpoint.php', {
+                const response = await axios.post('http://192.168.1.3/your_endpoint.php', {
                     operation: 'verifyAdminPassword',
                     password: password
                 });
@@ -722,7 +722,7 @@ const Dashboard = ({ isVisible, onClose }) => {
     useEffect(() => {
 
 
-        axios.post('http://localhost/pos/sales.php', new URLSearchParams({
+        axios.post('http://192.168.1.3/pos/sales.php', new URLSearchParams({
             operation: 'getZReport'
         }))
             .then(response => {

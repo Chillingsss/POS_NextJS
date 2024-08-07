@@ -26,7 +26,7 @@ const Login = () => {
     const handleLogin = async () => {
         if (username && password) {
             try {
-                const response = await axios.post('http://localhost/pos/user.php', new URLSearchParams({
+                const response = await axios.post('http://192.168.1.3/pos/user.php', new URLSearchParams({
                     operation: 'loginUser',
                     json: JSON.stringify({ loginUsername: username, loginPassword: password })
                 }), {
